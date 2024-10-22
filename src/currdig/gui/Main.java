@@ -4,16 +4,20 @@
  */
 package currdig.gui;
 
+import blockchain.utils.SecurityUtils;
+import currdig.core.Curriculum;
 import currdig.core.Entry;
 import currdig.core.User;
 import currdig.utils.Utils;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.List;
 import javax.swing.DefaultListModel;
@@ -32,6 +36,9 @@ public class Main extends javax.swing.JFrame {
     private String username;
 
     private List<User> users;
+
+    Curriculum curriculum = new Curriculum();
+    public static String fileCurrDig = "currdig.obj";
 
     /**
      * Creates new form Main
@@ -59,11 +66,19 @@ public class Main extends javax.swing.JFrame {
             // Optionally set txtEntity to empty or a default message
             txtEntity.setText("");
         }
-         listUsers();
+        listUsers();
 
         listUsers.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 listUsersValueChanged(evt);
+            }
+        });
+
+        //Add ActionListener to search field
+        jTextFieldNomePesquisar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                performSearch();
             }
         });
     }
@@ -364,7 +379,9 @@ public class Main extends javax.swing.JFrame {
 
             // Loop through the users and add the usernames to the listModel
             for (User user : users) {
-                listModel.addElement(user.getName());
+                if (!this.username.equals(user.getName())) {
+                    listModel.addElement(user.getName());
+                }
             }
 
             // Set the listModel to the listUsers JList
@@ -397,87 +414,87 @@ public class Main extends javax.swing.JFrame {
         }
     }
 
+    // Helper method to decode public key from Base64 string
+    private PublicKey decodePublicKey(String encodedKey) throws Exception {
+        byte[] publicBytes = Base64.getDecoder().decode(encodedKey);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePublic(keySpec);
+    }
+
     private void jButtonAdicionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAdicionarActionPerformed
         try {
-            String nome = txtUser.getText();
-            String descricao = jTextAreaDescricao.getText();
-            String entidade = txtEntity.getText();
+            // Get the description from the text area
+            String description = jTextAreaDescricao.getText();
 
-            if (nome.isEmpty() || descricao.isEmpty() || entidade.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Por favor, preencha todos os campos.");
-                return;
-            }
+            // Get the target user's public key from the txtUser text area
+            String targetUserPubKeyString = txtUser.getText();
+            PublicKey targetUserPubKey = SecurityUtils.getPublicKey(Base64.getDecoder().decode(targetUserPubKeyString));
 
-            // Check if the person already exists
-            Pessoa pessoa = gestaoEventos.pesquisarPessoaPorNome(nome);
-            if (pessoa == null) {
-                pessoa = new Pessoa(nome);
-                gestaoEventos.adicionarPessoa(pessoa);
-            }
+            // Create the Entry
+            Entry newEntry = new Entry(description, this.pubKey); // this.pubKey is the current user's (entity's) public key
 
-            Entry evento = new Entry(descricao, entidade, dataStr);
-            pessoa.adicionarEvento(evento);
+            // Convert the Entry to a string for signing
+            String entryString = newEntry.toString();
 
-            // Get the Merkle Root code for this person's data
-            String merkleRoot = gestaoEventos.getPessoaMerkleRoot(pessoa);
-            System.out.print("\nCódigo Merkle Root: " + merkleRoot);
-            JOptionPane.showMessageDialog(this, "Evento adicionado com sucesso.\nCódigo Merkle Root: " + merkleRoot);
+            // Sign the Entry
+            byte[] signature = SecurityUtils.sign(entryString.getBytes(), this.privKey);
 
-            // Save the updated data to the file
-            gestaoEventos.salvarParaFicheiro("dados.dat");
+            // Add the Entry to the Curriculum (blockchain)
+            curriculum.addEntry(targetUserPubKey, newEntry, signature);
 
-            limparCampos();
-
+            // Clear the input fields
+            jTextAreaDescricao.setText("");
+            txtUser.setText("");
+            curriculum.save(fileCurrDig);
+            JOptionPane.showMessageDialog(this, "Entry added successfully!");
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error adding entry: " + ex.getMessage());
         }
     }//GEN-LAST:event_jButtonAdicionarActionPerformed
 
     private void jButtonPesquisarCurrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonPesquisarCurrActionPerformed
+        performSearch();
+    }//GEN-LAST:event_jButtonPesquisarCurrActionPerformed
+
+    private void performSearch() {
         try {
             String nome = jTextFieldNomePesquisar.getText();
 
             if (!nome.isEmpty()) {
+                // Load users
+                listUsers();
 
-                // Load data from file
-                gestaoEventos.carregarDeFicheiro("dados.dat");
-
-                Pessoa pessoa = gestaoEventos.pesquisarPessoaPorNome(nome);
-
-                if (pessoa != null) {
-                    // Prompt the user to enter the Merkle Root code
-                    String merkleRootInput = JOptionPane.showInputDialog(this, "Insira o código Merkle Root para " + nome + ":");
-
-                    if (merkleRootInput != null && !merkleRootInput.isEmpty()) {
-                        // Verify the Merkle Root code
-                        boolean isValid = gestaoEventos.verifyPessoaData(pessoa, merkleRootInput);
-
-                        if (isValid) {
-                            // Display the person's data
-                            StringBuilder sb = new StringBuilder("Currículo de " + pessoa.getNome() + ":\n");
-                            for (EventoCurricular evento : pessoa.getEventos()) {
-                                sb.append(" - ").append(evento).append("\n");
-                            }
-                            jTextAreaListagem.setText(sb.toString());
-                        } else {
-                            JOptionPane.showMessageDialog(this, "Código Merkle Root inválido.");
+                // Filter users matching the search
+                DefaultListModel<String> filteredModel = new DefaultListModel<>();
+                for (User user : users) {
+                    if (user.getName().toLowerCase().contains(nome.toLowerCase())) {
+                        if (!this.username.equals(user.getName())) {
+                            filteredModel.addElement(user.getName());
                         }
-                    } else {
-                        JOptionPane.showMessageDialog(this, "O código Merkle Root é necessário.");
                     }
+                }
 
+                // Set the filtered model to the listUsers JList
+                listUsers.setModel(filteredModel);
+
+                // Set selection mode to single selection
+                listUsers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+                // Select the first item if there are matches
+                if (!filteredModel.isEmpty()) {
+                    listUsers.setSelectedIndex(0);
                 } else {
-                    JOptionPane.showMessageDialog(this, "Pessoa não encontrada.");
+                    JOptionPane.showMessageDialog(this, "No matching users found.");
                 }
 
             } else {
-                JOptionPane.showMessageDialog(this, "Por favor, insira um nome.");
+                listUsers();
             }
-
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
-    }//GEN-LAST:event_jButtonPesquisarCurrActionPerformed
+    }
 
     /**
      * @param args the command line arguments
