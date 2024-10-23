@@ -4,13 +4,22 @@
  */
 package currdig.core;
 
+import blockchain.utils.Block;
+import blockchain.utils.BlockChain;
+import blockchain.utils.ObjectUtils;
+import blockchain.utils.SecurityUtils;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,15 +28,8 @@ import java.util.Map;
  *
  * @author bmsff
  */
-import blockchain.utils.Block;
-import blockchain.utils.BlockChain;
-import blockchain.utils.ObjectUtils;
-import blockchain.utils.SecurityUtils;
-import java.security.*;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.*;
-
 public class Curriculum implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private BlockChain bc;
@@ -48,7 +50,7 @@ public class Curriculum implements Serializable {
         String entryData = ObjectUtils.convertObjectToBase64(entry);
         String targetUserPubKeyString = Base64.getEncoder().encodeToString(targetUserPubKey.getEncoded());
         bc.add(targetUserPubKeyString + "|" + entryData, DIFFICULTY);
-        
+
         userEntries.computeIfAbsent(targetUserPubKey, k -> new ArrayList<>()).add(entry);
     }
 
@@ -88,14 +90,16 @@ public class Curriculum implements Serializable {
         return new ArrayList<>(userEntries.keySet());
     }
 
-    public List<Entry> getAllEntriesFromBlockchain() throws Exception {
-        List<Entry> allEntries = new ArrayList<>();
-        for (Block b : bc.getChain()) {
-            String[] parts = b.getData().split("\\|", 2);
-            Entry entry = (Entry) ObjectUtils.convertBase64ToObject(parts[1]);
-            allEntries.add(entry);
+    public List<Entry> getEntriesForEntity(PublicKey entityPublicKey) {
+        List<Entry> entityEntries = new ArrayList<>();
+        for (List<Entry> entries : userEntries.values()) {
+            for (Entry entry : entries) {
+                if (entry.getEntityPublicKey().equals(entityPublicKey)) {
+                    entityEntries.add(entry);
+                }
+            }
         }
-        return allEntries;
+        return entityEntries;
     }
 
     public boolean isValid() {

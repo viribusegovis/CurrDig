@@ -23,6 +23,8 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  *
@@ -59,6 +61,17 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void initMyComponents() {
+        try {
+            users = Utils.loadUsers();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error loading users: " + ex.getMessage());
+        }
+        try {
+            curriculum = new Curriculum();
+            curriculum = Curriculum.load(fileCurrDig);
+        } catch (Exception e) {
+        }
+
         if (this.pubKey != null) {
             String pub = Base64.getEncoder().encodeToString(this.pubKey.getEncoded());
             txtEntity.setText(pub);
@@ -81,6 +94,16 @@ public class Main extends javax.swing.JFrame {
                 performSearch();
             }
         });
+
+        // Add a listener for tab changes
+        jTabbedPane1.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                if (jTabbedPane1.getSelectedIndex() == 1) { // Assuming History is the second tab
+                    updateHistoryList();
+                }
+            }
+        });
+
     }
 
     private String hashKey(String keyString) {
@@ -431,8 +454,8 @@ public class Main extends javax.swing.JFrame {
             String targetUserPubKeyString = txtUser.getText();
             PublicKey targetUserPubKey = SecurityUtils.getPublicKey(Base64.getDecoder().decode(targetUserPubKeyString));
 
-            // Create the Entry
-            Entry newEntry = new Entry(description, this.pubKey); // this.pubKey is the current user's (entity's) public key
+            // Create the Entry with the target user's public key
+            Entry newEntry = new Entry(description, this.pubKey, targetUserPubKey); // Updated constructor
 
             // Convert the Entry to a string for signing
             String entryString = newEntry.toString();
@@ -447,15 +470,42 @@ public class Main extends javax.swing.JFrame {
             jTextAreaDescricao.setText("");
             txtUser.setText("");
             curriculum.save(fileCurrDig);
+            updateHistoryList();
             JOptionPane.showMessageDialog(this, "Entry added successfully!");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error adding entry: " + ex.getMessage());
         }
+
+
     }//GEN-LAST:event_jButtonAdicionarActionPerformed
 
     private void jButtonPesquisarCurrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonPesquisarCurrActionPerformed
         performSearch();
     }//GEN-LAST:event_jButtonPesquisarCurrActionPerformed
+
+    private void updateHistoryList() {
+        List<Entry> userEntries = curriculum.getEntriesForEntity(this.pubKey); // Entries issued by this entity
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (Entry entry : userEntries) {
+            String targetUserName = getUsernameByPublicKey(entry.getTargetUserPublicKey());
+            String formattedString = String.format("%s - Issued To: %s - Date: %s",
+                    entry.getDescription(),
+                    targetUserName,
+                    entry.getDateTime().toString());
+            listModel.addElement(formattedString);
+        }
+        jList1.setModel(listModel);
+    }
+
+    private String getUsernameByPublicKey(PublicKey publicKey) {
+        for (User user : users) {
+            if (user.getPub().equals(publicKey)) {
+                return user.getName();
+            }
+        }
+        // If the user is not found, return a part of the public key
+        return Base64.getEncoder().encodeToString(publicKey.getEncoded()).substring(0, 10) + "...";
+    }
 
     private void performSearch() {
         try {
