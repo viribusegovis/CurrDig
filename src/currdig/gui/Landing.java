@@ -5,10 +5,8 @@
 package currdig.gui;
 
 import currdig.core.User;
-import java.awt.Image;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 /**
@@ -210,37 +208,37 @@ public class Landing extends javax.swing.JFrame {
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         try {
-        // Retrieve the username and password from the text fields
-        String username = txtLoginUsername.getText();
-        String password = new String(txtLoginPassword.getPassword());
+            // Retrieve the username and password from the text fields
+            String username = txtLoginUsername.getText();
+            String password = new String(txtLoginPassword.getPassword());
 
-        // Check if username or password is empty
-        if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Username and password are required.");
-            return;
+            // Check if username or password is empty
+            if (username.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Username and password are required.");
+                return;
+            }
+
+            // Create a user instance
+            User user = new User(username);
+
+            // Attempt to load the user's keys (decrypt keys with the password)
+            user.load(password);
+
+            // If no exception was thrown, login is successful
+            JOptionPane.showMessageDialog(this, "Login successful!");
+
+            // Close the current Landing window
+            this.dispose();
+
+            // Open the Main window and pass the user information including username
+            Main mainWindow = new Main(user.getPub(), user.getPriv(), user.getSim(), username);
+            mainWindow.setVisible(true);
+
+        } catch (Exception ex) {
+            // Handle incorrect password or other exceptions
+            java.util.logging.Logger.getLogger(Landing.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, "Login failed: " + ex.getMessage());
         }
-
-        // Create a user instance
-        User user = new User(username);
-
-        // Attempt to load the user's keys (decrypt keys with the password)
-        user.load(password);
-
-        // If no exception was thrown, login is successful
-        JOptionPane.showMessageDialog(this, "Login successful!");
-
-        // Close the current Landing window
-        this.dispose();
-
-        // Open the Main window and pass the user information including username
-        Main mainWindow = new Main(user.getPub(), user.getPriv(), user.getSim(), username);
-        mainWindow.setVisible(true);
-
-    } catch (Exception ex) {
-        // Handle incorrect password or other exceptions
-        java.util.logging.Logger.getLogger(Landing.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        JOptionPane.showMessageDialog(this, "Login failed: " + ex.getMessage());
-    }
     }//GEN-LAST:event_btnLoginActionPerformed
 
     private void btnRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegisterActionPerformed

@@ -34,7 +34,7 @@ public class Curriculum implements Serializable {
 
     private BlockChain bc;
     private Map<PublicKey, List<Entry>> userEntries;
-    public static int DIFFICULTY = 4;
+    public static int DIFFICULTY = 6;
 
     public Curriculum() {
         bc = new BlockChain();

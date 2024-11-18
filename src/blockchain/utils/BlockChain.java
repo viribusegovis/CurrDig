@@ -35,6 +35,7 @@ public class BlockChain implements Serializable {
 
     /**
      * gets the last block hash of the chain
+     *
      * @return last hash in the chain
      */
     public String getLastBlockHash() {
@@ -45,8 +46,10 @@ public class BlockChain implements Serializable {
         //hash of the last in the list
         return chain.get(chain.size() - 1).currentHash;
     }
+
     /**
      * adds data to the blockChain
+     *
      * @param data data to add in the block
      * @param dificulty dificulty of block to miners (POW)
      */
@@ -65,6 +68,7 @@ public class BlockChain implements Serializable {
         return chain.get(index);
     }
 
+    @Override
     public String toString() {
         StringBuilder txt = new StringBuilder();
         txt.append("Blochain size = " + chain.size() + "\n");
@@ -73,18 +77,19 @@ public class BlockChain implements Serializable {
         }
         return txt.toString();
     }
+
     public List<Block> getChain() {
-       return chain;
+        return chain;
     }
 
     public void save(String fileName) throws Exception {
-        try ( ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) {
             out.writeObject(chain);
         }
     }
 
     public void load(String fileName) throws Exception {
-        try ( ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) {
             this.chain = (ArrayList<Block>) in.readObject();
         }
     }

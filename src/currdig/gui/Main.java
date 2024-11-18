@@ -23,6 +23,7 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -400,11 +401,16 @@ public class Main extends javax.swing.JFrame {
             // Create a DefaultListModel<String> to hold the usernames
             DefaultListModel<String> listModel = new DefaultListModel<>();
 
+            for (User user : users) {
+                if (user.getName().equals(this.username)) {
+                    users.remove(user);
+                    break; // Stop searching once a match is found
+                }
+            }
+
             // Loop through the users and add the usernames to the listModel
             for (User user : users) {
-                if (!this.username.equals(user.getName())) {
-                    listModel.addElement(user.getName());
-                }
+                listModel.addElement(user.getName());
             }
 
             // Set the listModel to the listUsers JList
@@ -421,8 +427,10 @@ public class Main extends javax.swing.JFrame {
     private void listUsersValueChanged(javax.swing.event.ListSelectionEvent evt) {
         if (!evt.getValueIsAdjusting()) { // Ensure the event is the final selection
             int selectedIndex = listUsers.getSelectedIndex();
+
             if (selectedIndex != -1) {
                 // Get the selected user
+
                 User selectedUser = users.get(selectedIndex);
 
                 // Get the public key of the selected user
@@ -446,37 +454,47 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void jButtonAdicionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAdicionarActionPerformed
-        try {
-            // Get the description from the text area
-            String description = jTextAreaDescricao.getText();
+        jButtonAdicionar.setEnabled(false);
 
-            // Get the target user's public key from the txtUser text area
-            String targetUserPubKeyString = txtUser.getText();
-            PublicKey targetUserPubKey = SecurityUtils.getPublicKey(Base64.getDecoder().decode(targetUserPubKeyString));
+        new Thread(() -> {
+            try {
+                // Get the description from the text area
+                String description = jTextAreaDescricao.getText();
 
-            // Create the Entry with the target user's public key
-            Entry newEntry = new Entry(description, this.pubKey, targetUserPubKey); // Updated constructor
+                // Get the target user's public key from the txtUser text area
+                String targetUserPubKeyString = txtUser.getText();
+                PublicKey targetUserPubKey = SecurityUtils.getPublicKey(Base64.getDecoder().decode(targetUserPubKeyString));
 
-            // Convert the Entry to a string for signing
-            String entryString = newEntry.toString();
+                // Create the Entry with the target user's public key
+                Entry newEntry = new Entry(description, this.pubKey, targetUserPubKey); // Updated constructor
 
-            // Sign the Entry
-            byte[] signature = SecurityUtils.sign(entryString.getBytes(), this.privKey);
+                // Convert the Entry to a string for signing
+                String entryString = newEntry.toString();
 
-            // Add the Entry to the Curriculum (blockchain)
-            curriculum.addEntry(targetUserPubKey, newEntry, signature);
+                // Sign the Entry
+                byte[] signature = SecurityUtils.sign(entryString.getBytes(), this.privKey);
 
-            // Clear the input fields
-            jTextAreaDescricao.setText("");
-            txtUser.setText("");
-            curriculum.save(fileCurrDig);
-            updateHistoryList();
-            JOptionPane.showMessageDialog(this, "Entry added successfully!");
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error adding entry: " + ex.getMessage());
-        }
+                // Add the Entry to the Curriculum (blockchain)
+                curriculum.addEntry(targetUserPubKey, newEntry, signature);
 
+                // Clear the input fields
+                jTextAreaDescricao.setText("");
+                txtUser.setText("");
+                curriculum.save(fileCurrDig);
+                updateHistoryList();
+                JOptionPane.showMessageDialog(this, "Entry added successfully!");
 
+                SwingUtilities.invokeLater(() -> {
+                    //enable button
+                    jButtonAdicionar.setEnabled(true);
+                });
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error adding entry: " + ex.getMessage());
+            } finally {
+                jButtonAdicionar.setEnabled(true);
+            }
+        }).start();
     }//GEN-LAST:event_jButtonAdicionarActionPerformed
 
     private void jButtonPesquisarCurrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonPesquisarCurrActionPerformed
