@@ -31,13 +31,15 @@ public class Block implements Serializable {
     String data;         // data in the block
     int nonce;           // proof of work 
     String currentHash;  // Hash of block
+    MerkleTree merkleTree; // Merkle Tree
 
     public Block(String previousHash, String data, int nonce) {
         this.previousHash = previousHash;
         this.data = data;
         this.nonce = nonce;
-        this.currentHash = calculateHash();
-    }
+        // Create Merkle tree from data
+        this.merkleTree = new MerkleTree(new String[]{data});
+        this.currentHash = calculateHash();    }
 
     public String getData() {
         return data;
@@ -49,6 +51,10 @@ public class Block implements Serializable {
 
     public int getNonce() {
         return nonce;
+    }
+    // Add getter for Merkle tree
+    public MerkleTree getMerkleTree() {
+        return merkleTree;
     }
     
     

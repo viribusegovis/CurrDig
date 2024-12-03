@@ -54,13 +54,12 @@ public class BlockChain implements Serializable {
      * @param dificulty dificulty of block to miners (POW)
      */
     public void add(String data, int dificulty) {
-        //hash of previous block
         String prevHash = getLastBlockHash();
-        //mining block
-        int nonce = Miner.getNonce(prevHash + data, dificulty);
-        //build new block
+        // Include Merkle root in mining calculation
+        Block lastBlock = chain.isEmpty() ? null : chain.get(chain.size() - 1);
+        String merkleRoot = lastBlock != null ? lastBlock.getMerkleTree().getRoot() : "";
+        int nonce = Miner.getNonce(prevHash + data + merkleRoot, dificulty);
         Block newBlock = new Block(prevHash, data, nonce);
-        //add new block to the chain
         chain.add(newBlock);
     }
 
@@ -95,16 +94,14 @@ public class BlockChain implements Serializable {
     }
 
     public boolean isValid() {
-        //Validate blocks
+        // Validate blocks and their Merkle trees
         for (Block block : chain) {
-            if (!block.isValid()) {
+            if (!block.isValid() || !block.getMerkleTree().isValid()) {
                 return false;
             }
         }
-        //validate Links
-        //starts in the second block
+        // Validate chain links
         for (int i = 1; i < chain.size(); i++) {
-            //previous hash !=  hash of previous
             if (chain.get(i).previousHash != chain.get(i - 1).currentHash) {
                 return false;
             }
