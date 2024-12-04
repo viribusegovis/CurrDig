@@ -5,7 +5,7 @@
 package currdig.gui;
 
 import blockchain.utils.Block;
-import blockchain.utils.MerkleTree;
+import blockchain.utils.Hash;
 import blockchain.utils.SecurityUtils;
 import currdig.core.Curriculum;
 import currdig.core.Entry;
@@ -13,6 +13,7 @@ import currdig.core.User;
 import currdig.utils.Utils;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
@@ -20,6 +21,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import javax.swing.DefaultListModel;
@@ -142,15 +144,16 @@ public class Main extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
-        jButtonListar = new javax.swing.JButton();
         jButtonAdicionar = new javax.swing.JButton();
-        jSeparator2 = new javax.swing.JSeparator();
+        jButtonCriarBloco = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextAreaDescricao = new javax.swing.JTextArea();
         jScrollPane3 = new javax.swing.JScrollPane();
         txtEntity = new javax.swing.JTextArea();
         jScrollPane6 = new javax.swing.JScrollPane();
         txtUser = new javax.swing.JTextArea();
+        jSeparator2 = new javax.swing.JSeparator();
+        jButtonListar = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jTextFieldNomePesquisar = new javax.swing.JTextField();
@@ -177,7 +180,9 @@ public class Main extends javax.swing.JFrame {
         txtBlockHash = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
+        txtProof = new javax.swing.JTextField();
         txtMerkleRoot = new javax.swing.JTextField();
+        jLabel9 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new javax.swing.BoxLayout(getContentPane(), javax.swing.BoxLayout.LINE_AXIS));
@@ -188,13 +193,7 @@ public class Main extends javax.swing.JFrame {
         jPanel1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         jPanel5.setBackground(new java.awt.Color(255, 255, 255));
-
-        jButtonListar.setText("Atualizar Lista");
-        jButtonListar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonListarActionPerformed(evt);
-            }
-        });
+        jPanel5.setLayout(new java.awt.BorderLayout());
 
         jButtonAdicionar.setText("Adicionar");
         jButtonAdicionar.addActionListener(new java.awt.event.ActionListener() {
@@ -202,29 +201,15 @@ public class Main extends javax.swing.JFrame {
                 jButtonAdicionarActionPerformed(evt);
             }
         });
+        jPanel5.add(jButtonAdicionar, java.awt.BorderLayout.CENTER);
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jButtonListar, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jSeparator2)
-                .addContainerGap())
-            .addComponent(jButtonAdicionar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jButtonListar)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButtonAdicionar)
-                .addGap(10, 10, 10))
-        );
+        jButtonCriarBloco.setText("Criar Bloco");
+        jButtonCriarBloco.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonCriarBlocoActionPerformed(evt);
+            }
+        });
+        jPanel5.add(jButtonCriarBloco, java.awt.BorderLayout.PAGE_END);
 
         jTextAreaDescricao.setColumns(20);
         jTextAreaDescricao.setLineWrap(true);
@@ -251,6 +236,13 @@ public class Main extends javax.swing.JFrame {
         txtUser.setFocusable(false);
         jScrollPane6.setViewportView(txtUser);
 
+        jButtonListar.setText("Atualizar Lista");
+        jButtonListar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonListarActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -261,7 +253,9 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jScrollPane2)
                     .addComponent(jScrollPane3)
-                    .addComponent(jScrollPane6))
+                    .addComponent(jScrollPane6)
+                    .addComponent(jButtonListar, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
+                    .addComponent(jSeparator2))
                 .addContainerGap())
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
@@ -278,7 +272,11 @@ public class Main extends javax.swing.JFrame {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 174, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 167, Short.MAX_VALUE)
+                .addComponent(jButtonListar)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -396,6 +394,8 @@ public class Main extends javax.swing.JFrame {
 
         jLabel8.setText("Merkle Root");
 
+        jLabel9.setText("Element Proof");
+
         javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
         jPanel9Layout.setHorizontalGroup(
@@ -412,7 +412,7 @@ public class Main extends javax.swing.JFrame {
                         .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel9Layout.createSequentialGroup()
                                 .addComponent(jLabel2)
-                                .addGap(0, 346, Short.MAX_VALUE))
+                                .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(txtEntityPublicKey)))
                     .addGroup(jPanel9Layout.createSequentialGroup()
                         .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -424,18 +424,19 @@ public class Main extends javax.swing.JFrame {
                                 .addComponent(jLabel6)
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(txtTransactionHash)))
+                    .addComponent(jLabel5)
                     .addGroup(jPanel9Layout.createSequentialGroup()
                         .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel9Layout.createSequentialGroup()
-                                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel7)
-                                    .addComponent(txtBlockHash, javax.swing.GroupLayout.PREFERRED_SIZE, 439, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel8)
-                                    .addComponent(txtMerkleRoot, javax.swing.GroupLayout.PREFERRED_SIZE, 439, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(jLabel5))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(jLabel7)
+                            .addComponent(txtBlockHash, javax.swing.GroupLayout.PREFERRED_SIZE, 295, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtMerkleRoot, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel8))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtProof, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel9))))
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
@@ -456,18 +457,18 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(jLabel6))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel9Layout.createSequentialGroup()
-                        .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(txtTimestamp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtTransactionHash, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel7)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtBlockHash, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel9Layout.createSequentialGroup()
-                        .addComponent(jLabel8)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtMerkleRoot, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(txtTimestamp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtTransactionHash, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(jLabel8)
+                    .addComponent(jLabel9))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtBlockHash, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtProof, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtMerkleRoot, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -483,7 +484,7 @@ public class Main extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 910, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         jPanel8Layout.setVerticalGroup(
@@ -573,6 +574,23 @@ public class Main extends javax.swing.JFrame {
             List<Entry> userEntries = curriculum.getEntriesForEntity(this.pubKey);
             Entry selectedEntry = userEntries.get(selectedIndex);
 
+            // Find the block containing this entry
+            Block containingBlock = null;
+            int entryIndex = -1;
+            for (Block block : curriculum.getBlockChain().getChain()) {
+                for (int i = 0; i < block.getBuffer().size(); i++) {
+                    Entry entry = block.getBuffer().get(i);
+                    if (entry.toString().equals(selectedEntry.toString())) {
+                        containingBlock = block;
+                        entryIndex = i;
+                        break;
+                    }
+                }
+                if (containingBlock != null) {
+                    break;
+                }
+            }
+
             // Update User's Public Key field
             jTextField1.setText(Base64.getEncoder().encodeToString(
                     selectedEntry.getTargetUserPublicKey().getEncoded()));
@@ -587,23 +605,36 @@ public class Main extends javax.swing.JFrame {
             // Update Description field
             txtareaDescription.setText(selectedEntry.getDescription());
 
-            // Update Transaction Hash using SHA-256
-            txtTransactionHash.setText(hashKey(selectedEntry.toString()));
+            // Update Transaction Hash (hash of the entry)
+            txtTransactionHash.setText(Hash.getHash(selectedEntry.toString()));
 
-            // Update Block Hash - Since there's no getBlock(), create one
-            Block block = new Block(
-                    "0", // previousHash 
-                    selectedEntry.toString(), // data
-                    0 // nonce
-            );
-            txtBlockHash.setText(block.getCurrentHash());
+            if (containingBlock != null && entryIndex != -1) {
+                // Update Block Hash
+                txtBlockHash.setText(containingBlock.getCurrentHash());
 
-            // Update Merkle Root
-            MerkleTree merkleTree = block.getMerkleTree();
-            if (merkleTree != null) {
-                txtMerkleRoot.setText(merkleTree.getRoot());
+                // Update Merkle Root and Proof
+                if (containingBlock.getMerkleTree() != null) {
+                    List<String> proof = new ArrayList<>();
+                    // Get proof starting from the leaf node
+                    proof = containingBlock.getMerkleTree().getProof(selectedEntry);
+
+                    // Format proof for display
+                    StringBuilder proofText = new StringBuilder();
+                    for (String hash : proof) {
+                        proofText.append(hash).append("\n");
+                    }
+
+                    txtProof.setText(proof.toString());
+                    txtMerkleRoot.setText(containingBlock.getMerkleTree().getRoot());
+                    System.out.println(containingBlock.getMerkleTree().toString());
+                } else {
+                    txtMerkleRoot.setText("Block not finalized");
+                    txtProof.setText("Block not finalized");
+                }
             } else {
-                txtMerkleRoot.setText("Merkle root not available");
+                txtBlockHash.setText("Transaction not in block");
+                txtMerkleRoot.setText("Transaction not in block");
+                txtProof.setText("Transaction not in block");
             }
         }
     }
@@ -623,11 +654,8 @@ public class Main extends javax.swing.JFrame {
                 // Create the Entry with the target user's public key
                 Entry newEntry = new Entry(description, this.pubKey, targetUserPubKey); // Updated constructor
 
-                // Convert the Entry to a string for signing
-                String entryString = newEntry.toString();
-
                 // Sign the Entry
-                byte[] signature = SecurityUtils.sign(entryString.getBytes(), this.privKey);
+                byte[] signature = SecurityUtils.sign(newEntry.toString().getBytes(), this.privKey);
 
                 // Add the Entry to the Curriculum (blockchain)
                 curriculum.addEntry(targetUserPubKey, newEntry, signature);
@@ -656,13 +684,27 @@ public class Main extends javax.swing.JFrame {
         performSearch();
     }//GEN-LAST:event_jButtonPesquisarCurrActionPerformed
 
+    private void jButtonCriarBlocoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCriarBlocoActionPerformed
+        try {
+            if (!curriculum.getBlockChain().getPendingTransactions().isEmpty()) {
+                curriculum.createBlock();
+            }
+            curriculum.save(fileCurrDig);
+        } catch (IOException e) {
+            // Handle save error
+            throw new RuntimeException("Failed to save blockchain", e);
+        }
+    }//GEN-LAST:event_jButtonCriarBlocoActionPerformed
+
     private void updateHistoryList() {
         List<Entry> userEntries = curriculum.getEntriesForEntity(this.pubKey); // Entries issued by this entity
         DefaultListModel<String> listModel = new DefaultListModel<>();
         for (Entry entry : userEntries) {
             String targetUserName = getUsernameByPublicKey(entry.getTargetUserPublicKey());
-            String formattedString = String.format("%s - Issued To: %s - Date: %s",
+            String entityUserName = getUsernameByPublicKey(entry.getEntityPublicKey());
+            String formattedString = String.format("%s - Issued By: %s - Issued To: %s - Date: %s",
                     entry.getDescription(),
+                    entityUserName,
                     targetUserName,
                     entry.getDateTime().toString());
             listModel.addElement(formattedString);
@@ -671,6 +713,9 @@ public class Main extends javax.swing.JFrame {
     }
 
     private String getUsernameByPublicKey(PublicKey publicKey) {
+        if (this.pubKey.equals(publicKey)) {
+            return username;
+        }
         for (User user : users) {
             if (user.getPub().equals(publicKey)) {
                 return user.getName();
@@ -756,6 +801,7 @@ public class Main extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonAdicionar;
+    private javax.swing.JButton jButtonCriarBloco;
     private javax.swing.JButton jButtonListar;
     private javax.swing.JButton jButtonPesquisarCurr;
     private javax.swing.JLabel jLabel1;
@@ -766,6 +812,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
@@ -792,6 +839,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JTextArea txtEntity;
     private javax.swing.JTextField txtEntityPublicKey;
     private javax.swing.JTextField txtMerkleRoot;
+    private javax.swing.JTextField txtProof;
     private javax.swing.JTextField txtTimestamp;
     private javax.swing.JTextField txtTransactionHash;
     private javax.swing.JTextArea txtUser;

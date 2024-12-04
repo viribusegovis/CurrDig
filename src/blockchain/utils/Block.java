@@ -1,21 +1,9 @@
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: 
-//::                                                                         ::
-//::     Antonio Manuel Rodrigues Manso                                      ::
-//::                                                                         ::
-//::     I N S T I T U T O    P O L I T E C N I C O   D E   T O M A R        ::
-//::     Escola Superior de Tecnologia de Tomar                              ::
-//::     e-mail: manso@ipt.pt                                                ::
-//::     url   : http://orion.ipt.pt/~manso                                  ::
-//::                                                                         ::
-//::     This software was build with the purpose of investigate and         ::
-//::     learning.                                                           ::
-//::                                                                         ::
-//::                                                               (c)2022   ::
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//////////////////////////////////////////////////////////////////////////////
 package blockchain.utils;
 
+import currdig.core.Entry;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created on 22/08/2022, 09:23:49
@@ -27,22 +15,32 @@ import java.io.Serializable;
  */
 public class Block implements Serializable {
 
-    String previousHash; // link to previous block
-    String data;         // data in the block
-    int nonce;           // proof of work 
-    String currentHash;  // Hash of block
-    MerkleTree merkleTree; // Merkle Tree
-
-    public Block(String previousHash, String data, int nonce) {
+    String previousHash;     // link to previous block
+    int nonce;              // proof of work 
+    String currentHash;     // Hash of block
+    MerkleTree merkleTree;  // Merkle Tree
+    List<Entry> buffer;     // Buffer for transactions
+    
+    public Block(String previousHash) {
         this.previousHash = previousHash;
-        this.data = data;
-        this.nonce = nonce;
-        // Create Merkle tree from data
-        this.merkleTree = new MerkleTree(new String[]{data});
-        this.currentHash = calculateHash();    }
+        this.nonce = 0;
+        this.buffer = new ArrayList<>();
+        this.merkleTree = null;
+        this.currentHash = null;
+    }
 
-    public String getData() {
-        return data;
+    public void addTransaction(Entry transaction) {
+        buffer.add(transaction);
+    }
+
+    public void createBlock(int nonce) {
+        this.nonce = nonce;
+        // Convert buffer entries to String array for Merkle tree
+        String[] transactions = buffer.stream()
+                                    .map(Entry::toString)
+                                    .toArray(String[]::new);
+        this.merkleTree = new MerkleTree(transactions);
+        this.currentHash = calculateHash();
     }
 
     public String getPreviousHash() {
@@ -52,30 +50,40 @@ public class Block implements Serializable {
     public int getNonce() {
         return nonce;
     }
-    // Add getter for Merkle tree
+
     public MerkleTree getMerkleTree() {
         return merkleTree;
     }
     
-    
+    public List<Entry> getBuffer() {
+        return new ArrayList<>(buffer);
+    }
 
     public String calculateHash() {
-        return Hash.getHash(nonce + previousHash + data);
+        if (merkleTree == null) {
+            return null;
+        }
+        return Hash.getHash(nonce + previousHash + merkleTree.getRoot());
     }
     
-    public String getCurrentHash(){
+    public String getCurrentHash() {
         return currentHash;
     }
 
     public String toString() {
-        return // (isValid() ? "OK\t" : "ERROR\t")+
-                 String.format("[ %8s", previousHash) + " <- " + 
-                   String.format("%-10s", data) +  String.format(" %7d ] = ", nonce) + 
-                String.format("%8s",currentHash);
-
+        if (merkleTree == null) {
+            return "Block not finalized - Transactions in buffer: " + buffer.size();
+        }
+        return String.format("[ %8s", previousHash) + " <- " + 
+               String.format("%-10s", merkleTree.getRoot()) + 
+               String.format(" %7d ] = ", nonce) + 
+               String.format("%8s", currentHash);
     }
 
     public boolean isValid() {
+        if (merkleTree == null || currentHash == null) {
+            return false;
+        }
         return currentHash.equals(calculateHash());
     }
 
@@ -83,5 +91,4 @@ public class Block implements Serializable {
     private static final long serialVersionUID = 202208220923L;
     //:::::::::::::::::::::::::::  Copyright(c) M@nso  2022  :::::::::::::::::::
     ///////////////////////////////////////////////////////////////////////////
-
 }

@@ -1,20 +1,6 @@
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: 
-//::                                                                         ::
-//::     Antonio Manuel Rodrigues Manso                                      ::
-//::                                                                         ::
-//::     I N S T I T U T O    P O L I T E C N I C O   D E   T O M A R        ::
-//::     Escola Superior de Tecnologia de Tomar                              ::
-//::     e-mail: manso@ipt.pt                                                ::
-//::     url   : http://orion.ipt.pt/~manso                                  ::
-//::                                                                         ::
-//::     This software was build with the purpose of investigate and         ::
-//::     learning.                                                           ::
-//::                                                                         ::
-//::                                                               (c)2022   ::
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//////////////////////////////////////////////////////////////////////////////
 package blockchain.utils;
 
+import currdig.core.Entry;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
@@ -23,94 +9,111 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created on 22/08/2022, 10:09:17
- *
- * @author IPT - computer
- * @version 1.0
- */
 public class BlockChain implements Serializable {
+    private static final long serialVersionUID = 202208221009L;
+    private ArrayList<Block> chain;
+    private Block currentBlock;
+    private List<Entry> transactionBuffer;
 
-    ArrayList<Block> chain = new ArrayList<>();
+    public BlockChain() {
+        chain = new ArrayList<>();
+        transactionBuffer = new ArrayList<>();
+        currentBlock = new Block(String.format("%08d", 0));
+    }
 
-    /**
-     * gets the last block hash of the chain
-     *
-     * @return last hash in the chain
-     */
     public String getLastBlockHash() {
-        //Genesis block
         if (chain.isEmpty()) {
             return String.format("%08d", 0);
         }
-        //hash of the last in the list
-        return chain.get(chain.size() - 1).currentHash;
+        return chain.get(chain.size() - 1).getCurrentHash();
     }
 
-    /**
-     * adds data to the blockChain
-     *
-     * @param data data to add in the block
-     * @param dificulty dificulty of block to miners (POW)
-     */
-    public void add(String data, int dificulty) {
+    public void addTransaction(Entry transaction) {
+        transactionBuffer.add(transaction);
+    }
+
+    public void createBlock(int difficulty) {
+        if (transactionBuffer.isEmpty()) {
+            System.out.println("Buffer Empty");
+            return;
+        }
+
+        // Get mining target
         String prevHash = getLastBlockHash();
-        // Include Merkle root in mining calculation
-        Block lastBlock = chain.isEmpty() ? null : chain.get(chain.size() - 1);
-        String merkleRoot = lastBlock != null ? lastBlock.getMerkleTree().getRoot() : "";
-        int nonce = Miner.getNonce(prevHash + data + merkleRoot, dificulty);
-        Block newBlock = new Block(prevHash, data, nonce);
-        chain.add(newBlock);
+        
+        // Create new block with buffered transactions
+        Block block = new Block(prevHash);
+        
+        // Add all buffered transactions to the block
+        for (Entry transaction : transactionBuffer) {
+            block.addTransaction(transaction);
+        }
+        
+        // Mine the block
+        int nonce = Miner.getNonce(prevHash + transactionBuffer.toString(), difficulty);
+        
+        // Finalize the block with the found nonce
+        block.createBlock(nonce);
+        
+        // Add to chain and clear buffer
+        chain.add(block);
+        System.out.println(block);
+        transactionBuffer.clear();
     }
 
     public Block get(int index) {
         return chain.get(index);
     }
 
-    @Override
-    public String toString() {
-        StringBuilder txt = new StringBuilder();
-        txt.append("Blochain size = " + chain.size() + "\n");
-        for (Block block : chain) {
-            txt.append(block.toString() + "\n");
-        }
-        return txt.toString();
-    }
-
+    
     public List<Block> getChain() {
         return chain;
     }
 
+    public List<Entry> getPendingTransactions() {
+        return new ArrayList<>(transactionBuffer);
+    }
+
     public void save(String fileName) throws Exception {
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) {
-            out.writeObject(chain);
+            out.writeObject(this);
         }
     }
 
     public void load(String fileName) throws Exception {
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) {
-            this.chain = (ArrayList<Block>) in.readObject();
+            BlockChain loaded = (BlockChain) in.readObject();
+            this.chain = loaded.chain;
+            this.transactionBuffer = loaded.transactionBuffer;
         }
     }
 
     public boolean isValid() {
-        // Validate blocks and their Merkle trees
         for (Block block : chain) {
-            if (!block.isValid() || !block.getMerkleTree().isValid()) {
+            if (!block.isValid()) {
                 return false;
             }
         }
-        // Validate chain links
+        
         for (int i = 1; i < chain.size(); i++) {
-            if (chain.get(i).previousHash != chain.get(i - 1).currentHash) {
+            String prevHash = chain.get(i).getPreviousHash();
+            String actualPrevHash = chain.get(i - 1).getCurrentHash();
+            if (!prevHash.equals(actualPrevHash)) {
                 return false;
             }
         }
         return true;
     }
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    private static final long serialVersionUID = 202208221009L;
-    //:::::::::::::::::::::::::::  Copyright(c) M@nso  2022  :::::::::::::::::::
-    ///////////////////////////////////////////////////////////////////////////
+    @Override
+    public String toString() {
+        StringBuilder txt = new StringBuilder();
+        txt.append("Blockchain size = ").append(chain.size())
+           .append(" (Pending transactions: ").append(transactionBuffer.size())
+           .append(")\n");
+        for (Block block : chain) {
+            txt.append(block.toString()).append("\n");
+        }
+        return txt.toString();
+    }
 }

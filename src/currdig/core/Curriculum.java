@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package currdig.core;
 
 import blockchain.utils.Block;
@@ -16,7 +12,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.security.KeyFactory;
 import java.security.PublicKey;
-import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -24,14 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- *
- * @author bmsff
- */
 public class Curriculum implements Serializable {
-
     private static final long serialVersionUID = 1L;
-
     private BlockChain bc;
     private Map<PublicKey, List<Entry>> userEntries;
     public static int DIFFICULTY = 6;
@@ -46,30 +35,37 @@ public class Curriculum implements Serializable {
         if (!SecurityUtils.verifySign(entry.toString().getBytes(), signature, entry.getEntityPublicKey())) {
             throw new Exception("Invalid signature");
         }
-
-        String entryData = ObjectUtils.convertObjectToBase64(entry);
-        String targetUserPubKeyString = Base64.getEncoder().encodeToString(targetUserPubKey.getEncoded());
-        bc.add(targetUserPubKeyString + "|" + entryData, DIFFICULTY);
-
+        
+        // Add to blockchain's buffer
+        bc.addTransaction(entry);
+        
+        // Store in local map
         userEntries.computeIfAbsent(targetUserPubKey, k -> new ArrayList<>()).add(entry);
+    }
+
+    public void createBlock() {
+        bc.createBlock(DIFFICULTY);
     }
 
     public List<Entry> getUserEntries(PublicKey userPublicKey) {
         return userEntries.getOrDefault(userPublicKey, new ArrayList<>());
     }
 
+    @Override
     public String toString() {
         StringBuilder txt = new StringBuilder();
         for (Block b : bc.getChain()) {
-            String[] parts = b.getData().split("\\|", 2);
-            PublicKey userPublicKey = decodePublicKey(parts[0]);
-            Entry entry = (Entry) ObjectUtils.convertBase64ToObject(parts[1]);
-            txt.append(b.getPreviousHash()).append(" ")
-                    .append(userPublicKey.toString()).append(": ")
-                    .append(entry.toString()).append(" ")
-                    .append(b.getNonce()).append(" ")
-                    .append(b.getCurrentHash())
-                    .append("\n");
+            for (Entry entry : b.getBuffer()) {
+                String[] parts = entry.toString().split("\\|", 2);
+                PublicKey userPublicKey = decodePublicKey(parts[0]);
+                Entry currEntry = (Entry) ObjectUtils.convertBase64ToObject(parts[1]);
+                txt.append(b.getPreviousHash()).append(" ")
+                   .append(userPublicKey.toString()).append(": ")
+                   .append(currEntry.toString()).append(" ")
+                   .append(b.getNonce()).append(" ")
+                   .append(b.getCurrentHash())
+                   .append("\n");
+            }
         }
         return txt.toString();
     }
@@ -86,6 +82,10 @@ public class Curriculum implements Serializable {
         }
     }
 
+    public BlockChain getBlockChain() {
+        return bc;
+    }
+    
     public List<PublicKey> getUsers() {
         return new ArrayList<>(userEntries.keySet());
     }
@@ -104,13 +104,6 @@ public class Curriculum implements Serializable {
 
     public boolean isValid() {
         return bc.isValid();
-    }
-
-    private boolean verifySignature(PublicKey publicKey, String data, byte[] signature) throws Exception {
-        Signature sig = Signature.getInstance("SHA256withRSA");
-        sig.initVerify(publicKey);
-        sig.update(data.getBytes());
-        return sig.verify(signature);
     }
 
     private PublicKey decodePublicKey(String encodedKey) {
