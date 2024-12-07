@@ -53,7 +53,7 @@ public class BlockChain implements Serializable {
         int nonce = Miner.getNonce(prevHash + transactionBuffer.toString(), difficulty);
         
         // Finalize the block with the found nonce
-        block.createBlock(nonce);
+        block.createBlock(prevHash + transactionBuffer.toString(), nonce);
         
         // Add to chain and clear buffer
         chain.add(block);
@@ -90,7 +90,7 @@ public class BlockChain implements Serializable {
 
     public boolean isValid() {
         for (Block block : chain) {
-            if (!block.isValid()) {
+            if (!block.isValid(getLastBlockHash() + transactionBuffer.toString())) {
                 return false;
             }
         }
