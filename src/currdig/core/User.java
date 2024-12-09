@@ -1,11 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package currdig.core;
 
 import blockchain.utils.SecurityUtils;
-import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Key;
@@ -14,11 +10,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Base64;
 
-/**
- *
- * @author bmsff
- */
-public class User {
+public class User implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private static String UserPath = "UsersData/";
 
@@ -38,13 +32,6 @@ public class User {
     public User(String username, PublicKey publicKey) {
         this.name = username;
         this.pub = publicKey;
-    }
-
-    public User() throws Exception {
-        this.name = "noName";
-        this.pub = null;
-        this.priv = null;
-        this.sim = null;
     }
 
     public void generateKeys() throws Exception {
@@ -107,36 +94,38 @@ public class User {
         }
     }
 
+    // Serialization-friendly getters
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    // Utility methods for converting Base64 strings to Key objects
+    public PublicKey getPub() throws Exception {
+        return pub;
     }
 
-    public PublicKey getPub() {
-        return pub;
+    public PrivateKey getPriv() throws Exception {
+        return priv;
+    }
+
+    public Key getSim() throws Exception {
+        return sim;
+    }
+
+    // Setters
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setPub(PublicKey pub) {
         this.pub = pub;
     }
 
-    public PrivateKey getPriv() {
-        return priv;
-    }
-
     public void setPriv(PrivateKey priv) {
         this.priv = priv;
-    }
-
-    public Key getSim() {
-        return sim;
     }
 
     public void setSim(Key sim) {
         this.sim = sim;
     }
-
 }

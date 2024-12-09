@@ -24,18 +24,23 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import p2p.IremoteP2P;
 
 /**
  *
  * @author bmsff
  */
 public class Main extends javax.swing.JFrame {
+
+    private IremoteP2P node;
 
     private PublicKey pubKey;
     private PrivateKey privKey;
@@ -55,11 +60,12 @@ public class Main extends javax.swing.JFrame {
      * @param simKey
      * @param username
      */
-    public Main(PublicKey pubKey, PrivateKey privKey, Key simKey, String username) {
+    public Main(PublicKey pubKey, PrivateKey privKey, Key simKey, String username, IremoteP2P node) {
         this.pubKey = pubKey;
         this.privKey = privKey;
         this.simKey = simKey;
         this.username = username; // Set the username
+        this.node = node;
 
         initComponents();
         initMyComponents();
@@ -88,7 +94,11 @@ public class Main extends javax.swing.JFrame {
 
         listUsers.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                listUsersValueChanged(evt);
+                try {
+                    listUsersValueChanged(evt);
+                } catch (Exception ex) {
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
 
@@ -111,8 +121,13 @@ public class Main extends javax.swing.JFrame {
         // Add a listener for tab changes
         jTabbedPane1.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                if (jTabbedPane1.getSelectedIndex() == 1) { // Assuming History is the second tab
-                    updateHistoryList();
+                if (jTabbedPane1.getSelectedIndex() == 1) {
+                    try {
+                        // Assuming History is the second tab
+                        updateHistoryList();
+                    } catch (Exception ex) {
+                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
             }
         });
@@ -523,7 +538,7 @@ public class Main extends javax.swing.JFrame {
     private void listUsers() {
         try {
             // Load users from Utils
-            users = Utils.loadUsers();
+            users = node.listUsers();
 
             // Create a DefaultListModel<String> to hold the usernames
             DefaultListModel<String> listModel = new DefaultListModel<>();
@@ -551,7 +566,7 @@ public class Main extends javax.swing.JFrame {
         }
     }
 
-    private void listUsersValueChanged(javax.swing.event.ListSelectionEvent evt) {
+    private void listUsersValueChanged(javax.swing.event.ListSelectionEvent evt) throws Exception {
         if (!evt.getValueIsAdjusting()) { // Ensure the event is the final selection
             int selectedIndex = listUsers.getSelectedIndex();
 
@@ -718,7 +733,7 @@ public class Main extends javax.swing.JFrame {
         }).start();
     }//GEN-LAST:event_jButtonCriarBlocoActionPerformed
 
-    private void updateHistoryList() {
+    private void updateHistoryList() throws Exception {
         List<Entry> userEntries = curriculum.getEntriesForEntity(this.pubKey); // Entries issued by this entity
         DefaultListModel<String> listModel = new DefaultListModel<>();
         for (Entry entry : userEntries) {
@@ -734,7 +749,7 @@ public class Main extends javax.swing.JFrame {
         jList1.setModel(listModel);
     }
 
-    private String getUsernameByPublicKey(PublicKey publicKey) {
+    private String getUsernameByPublicKey(PublicKey publicKey) throws Exception {
         if (this.pubKey.equals(publicKey)) {
             return username;
         }
@@ -816,7 +831,7 @@ public class Main extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Main(null, null, null, null).setVisible(true); // Initial call without keys or username (for testing)
+                new Main(null, null, null, null, null).setVisible(true); // Initial call without keys or username (for testing)
             }
         });
     }

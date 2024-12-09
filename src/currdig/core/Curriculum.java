@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Curriculum implements Serializable {
+
     private static final long serialVersionUID = 1L;
     private BlockChain bc;
     private Map<PublicKey, List<Entry>> userEntries;
@@ -35,10 +36,10 @@ public class Curriculum implements Serializable {
         if (!SecurityUtils.verifySign(entry.toString().getBytes(), signature, entry.getEntityPublicKey())) {
             throw new Exception("Invalid signature");
         }
-        
+
         // Add to blockchain's buffer
         bc.addTransaction(entry);
-        
+
         // Store in local map
         userEntries.computeIfAbsent(targetUserPubKey, k -> new ArrayList<>()).add(entry);
     }
@@ -60,11 +61,11 @@ public class Curriculum implements Serializable {
                 PublicKey userPublicKey = decodePublicKey(parts[0]);
                 Entry currEntry = (Entry) ObjectUtils.convertBase64ToObject(parts[1]);
                 txt.append(b.getPreviousHash()).append(" ")
-                   .append(userPublicKey.toString()).append(": ")
-                   .append(currEntry.toString()).append(" ")
-                   .append(b.getNonce()).append(" ")
-                   .append(b.getCurrentHash())
-                   .append("\n");
+                        .append(userPublicKey.toString()).append(": ")
+                        .append(currEntry.toString()).append(" ")
+                        .append(b.getNonce()).append(" ")
+                        .append(b.getCurrentHash())
+                        .append("\n");
             }
         }
         return txt.toString();
@@ -85,7 +86,7 @@ public class Curriculum implements Serializable {
     public BlockChain getBlockChain() {
         return bc;
     }
-    
+
     public List<PublicKey> getUsers() {
         return new ArrayList<>(userEntries.keySet());
     }

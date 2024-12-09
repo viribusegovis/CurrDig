@@ -12,16 +12,17 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class MerkleTree implements Serializable {
+
     private List<List<String>> hashTree;
     private List<String> elements;
-    
+
     public MerkleTree(Object[] arrayOfData) {
         this(Arrays.asList(arrayOfData));
     }
-    
+
     public MerkleTree(List<Object> listOfData) {
         this();
-        
+
         for (Object obj : listOfData) {
             elements.add(obj.toString());
         }
@@ -31,22 +32,22 @@ public final class MerkleTree implements Serializable {
         }
         makeTree(hashT);
     }
-    
+
     public MerkleTree() {
         hashTree = new ArrayList<>();
         elements = new ArrayList<>();
     }
-    
+
     public String getRoot() {
         return hashTree.get(0).get(0);
     }
-    
+
     public void makeTree(List<String> hashList) {
         hashTree.add(0, hashList);
         if (hashList.size() <= 1) {
             return;
         }
-        
+
         List<String> newLevel = new ArrayList<>();
         for (int i = 0; i < hashList.size(); i += 2) {
             String data = hashList.get(i);
@@ -58,11 +59,11 @@ public final class MerkleTree implements Serializable {
         }
         makeTree(newLevel);
     }
-    
+
     public List<String> getProof(Object data) {
         List<String> proof = new ArrayList<>();
         String targetHash = getHashValue(data.toString());
-        
+
         int index = -1;
         List<String> bottomLevel = hashTree.get(hashTree.size() - 1);
         for (int i = 0; i < bottomLevel.size(); i++) {
@@ -71,11 +72,11 @@ public final class MerkleTree implements Serializable {
                 break;
             }
         }
-        
+
         if (index < 0) {
             return proof;
         }
-        
+
         int currentIndex = index;
         for (int level = hashTree.size() - 1; level > 0; level--) {
             List<String> currentLevel = hashTree.get(level);
@@ -90,7 +91,7 @@ public final class MerkleTree implements Serializable {
         }
         return proof;
     }
-    
+
     public static boolean isProofValid(Object data, List<String> proof) {
         if (proof.isEmpty()) {
             return false;
@@ -98,7 +99,7 @@ public final class MerkleTree implements Serializable {
         String currentHash = getHashValue(data.toString());
         return isProofValid(currentHash, proof, 0);
     }
-    
+
     public static boolean isProofValid(String currentHash, List<String> proof, int indexOfList) {
         if (indexOfList == proof.size() - 1) {
             return currentHash.equals(proof.get(proof.size() - 1));
@@ -110,7 +111,7 @@ public final class MerkleTree implements Serializable {
         newHash = getHashValue(proof.get(indexOfList) + currentHash);
         return isProofValid(newHash, proof, indexOfList + 1);
     }
-    
+
     public boolean isValid() {
         for (int i = 0; i < this.elements.size(); i++) {
             if (!getHashValue(this.elements.get(i).toString())
@@ -132,12 +133,12 @@ public final class MerkleTree implements Serializable {
         }
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toTree();
     }
-    
+
     public String toTree() {
         int SIZE = 9;
         for (Object elem : elements) {
@@ -145,7 +146,7 @@ public final class MerkleTree implements Serializable {
                 SIZE = elem.toString().length();
             }
         }
-        
+
         StringBuilder txt = new StringBuilder();
         for (int i = 0; i < hashTree.size(); i++) {
             int ini = (int) Math.pow(2, hashTree.size() - i - 1) - 1;
@@ -165,27 +166,27 @@ public final class MerkleTree implements Serializable {
         }
         return txt.toString();
     }
-    
+
     public void saveToFile(String fileName) throws FileNotFoundException, IOException {
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) {
             out.writeObject(this);
         }
     }
-    
+
     public static MerkleTree loadFromFile(String fileName) throws FileNotFoundException, IOException, ClassNotFoundException {
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) {
             return (MerkleTree) in.readObject();
         }
     }
-    
+
     public List<List<String>> getHashTree() {
         return hashTree;
     }
-    
+
     public List<String> getElements() {
         return elements;
     }
-    
+
     public String getElementsString() {
         StringBuilder txt = new StringBuilder();
         for (Object obj : elements) {
@@ -193,7 +194,7 @@ public final class MerkleTree implements Serializable {
         }
         return txt.toString().trim();
     }
-    
+
     public static String centerString(String text, int len) {
         String out = String.format("%" + len + "s%s%" + len + "s", "", text, "");
         float mid = (out.length() / 2);
@@ -201,14 +202,12 @@ public final class MerkleTree implements Serializable {
         float end = start + len;
         return out.substring((int) start, (int) end);
     }
-    
+
     public static String intToHex(int i) {
         return Integer.toString(i, 16).toUpperCase();
     }
-    
+
     public static String getHashValue(String data) {
         return intToHex(Math.abs(data.hashCode()));
     }
-    
-    private static final long serialVersionUID = 202209131142L;
 }

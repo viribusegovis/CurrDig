@@ -5,14 +5,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created on 22/08/2022, 09:23:49
- *
- * Block with consensus of Proof of Work
- *
- * @author IPT - computer
- * @version 1.0
- */
 public class Block implements Serializable {
 
     String previousHash;     // link to previous block
@@ -89,9 +81,4 @@ public class Block implements Serializable {
         }
         return currentHash.equals(calculateHash(data));
     }
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    private static final long serialVersionUID = 202208220923L;
-    //:::::::::::::::::::::::::::  Copyright(c) M@nso  2022  :::::::::::::::::::
-    ///////////////////////////////////////////////////////////////////////////
 }

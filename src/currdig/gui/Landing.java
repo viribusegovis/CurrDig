@@ -5,9 +5,16 @@
 package currdig.gui;
 
 import currdig.core.User;
+import currdig.utils.RMI;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import p2p.IremoteP2P;
 
 /**
  *
@@ -15,12 +22,46 @@ import javax.swing.JOptionPane;
  */
 public class Landing extends javax.swing.JFrame {
 
+    private IremoteP2P node;
+
     /**
      * Creates new form Landing
      */
-    public Landing() {
-        initComponents();
+    public Landing() throws NotBoundException, MalformedURLException {
+        try {
+            initComponents();
 
+            while (true) {
+                // Prompt the user for the IP address
+                String ipAddress = JOptionPane.showInputDialog(
+                        this,
+                        "Enter the IP address of the remote P2P node:",
+                        "Connect to P2P Node",
+                        JOptionPane.QUESTION_MESSAGE
+                );
+
+                // Check if the user canceled the prompt
+                if (ipAddress == null) {
+                    JOptionPane.showMessageDialog(this, "Program will now exit as no IP address was provided.");
+                    System.exit(0); // Exit the program
+                }
+
+                ipAddress = ipAddress.trim();
+
+                try {
+                    // Attempt to connect to the remote P2P node
+                    node = (IremoteP2P) RMI.getRemote(ipAddress);
+                    System.out.println("Connected to remote P2P node at " + ipAddress);
+                    break; // Exit the loop once connected successfully
+                } catch (RemoteException ex) {
+                    JOptionPane.showMessageDialog(this, "Failed to connect to the P2P node at " + ipAddress + ". Please try again.");
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Unexpected error: " + ex.getMessage());
+            ex.printStackTrace();
+            System.exit(1); // Exit the program on unexpected errors
+        }
     }
 
     /**
@@ -40,6 +81,7 @@ public class Landing extends javax.swing.JFrame {
         txtLoginPassword = new javax.swing.JPasswordField();
         jLabel2 = new javax.swing.JLabel();
         lblLogo1 = new javax.swing.JLabel();
+        txtAddress = new javax.swing.JTextField();
         Register = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel();
         txtRegisterUsername = new javax.swing.JTextField();
@@ -75,6 +117,8 @@ public class Landing extends javax.swing.JFrame {
         lblLogo1.setMaximumSize(new java.awt.Dimension(10, 10));
         lblLogo1.setPreferredSize(new java.awt.Dimension(100, 100));
 
+        txtAddress.setText("jTextField1");
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -86,7 +130,10 @@ public class Landing extends javax.swing.JFrame {
                     .addComponent(txtLoginPassword, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(txtLoginUsername, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblLogo1, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE))
+                    .addComponent(lblLogo1, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(txtAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -100,7 +147,9 @@ public class Landing extends javax.swing.JFrame {
                 .addComponent(txtLoginUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(txtLoginPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(40, 40, 40)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12)
                 .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(39, 39, 39))
         );
@@ -213,17 +262,20 @@ public class Landing extends javax.swing.JFrame {
             String username = txtLoginUsername.getText();
             String password = new String(txtLoginPassword.getPassword());
 
-            // Check if username or password is empty
+            // Validate input
             if (username.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Username and password are required.");
                 return;
             }
 
-            // Create a user instance
-            User user = new User(username);
+            // Authenticate with the P2P node
+            if (!node.authenticate(username, password)) {
+                JOptionPane.showMessageDialog(this, "Invalid username or password.");
+                return;
+            }
 
-            // Attempt to load the user's keys (decrypt keys with the password)
-            user.load(password);
+            // Retrieve the user object
+            User user = node.getUser(username);
 
             // If no exception was thrown, login is successful
             JOptionPane.showMessageDialog(this, "Login successful!");
@@ -231,12 +283,10 @@ public class Landing extends javax.swing.JFrame {
             // Close the current Landing window
             this.dispose();
 
-            // Open the Main window and pass the user information including username
-            Main mainWindow = new Main(user.getPub(), user.getPriv(), user.getSim(), username);
+            // Open the Main window and pass user details
+            Main mainWindow = new Main(user.getPub(), user.getPriv(), user.getSim(), username, node);
             mainWindow.setVisible(true);
-
         } catch (Exception ex) {
-            // Handle incorrect password or other exceptions
             java.util.logging.Logger.getLogger(Landing.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(this, "Login failed: " + ex.getMessage());
         }
@@ -247,27 +297,25 @@ public class Landing extends javax.swing.JFrame {
             String username = txtRegisterUsername.getText();
             String password = new String(txtRegisterPassword.getPassword());
 
-            // Check if username or password is empty
+            // Validate input
             if (username.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Username and password are required.");
                 return;
             }
 
-            // Check if the user already exists by attempting to load it
-            String path = "UsersData/" + username;
-            if (Files.exists(Path.of(path))) {
+            // Check if the user already exists
+            if (node.checkUsrExists(username)) {
                 JOptionPane.showMessageDialog(this, "User with this username already exists.");
                 return;
             }
 
-            // Create a user instance
-            User u = new User(username);
+            // Register a new user
+            if (!node.addUser(username, password)) {
+                JOptionPane.showMessageDialog(this, "Failed to register user. Please try again.");
+                return;
+            }
 
-            // Generate keys and save the user
-            u.generateKeys();
-            u.save(password);
-
-            JOptionPane.showMessageDialog(this, "User created successfully.");
+            JOptionPane.showMessageDialog(this, "User registered successfully.");
         } catch (Exception ex) {
             java.util.logging.Logger.getLogger(Landing.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(this, ex.getMessage());
@@ -304,7 +352,13 @@ public class Landing extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Landing().setVisible(true);
+                try {
+                    new Landing().setVisible(true);
+                } catch (NotBoundException ex) {
+                    Logger.getLogger(Landing.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (MalformedURLException ex) {
+                    Logger.getLogger(Landing.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
@@ -323,6 +377,7 @@ public class Landing extends javax.swing.JFrame {
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblLogo;
     private javax.swing.JLabel lblLogo1;
+    private javax.swing.JTextField txtAddress;
     private javax.swing.JPasswordField txtLoginPassword;
     private javax.swing.JTextField txtLoginUsername;
     private javax.swing.JPasswordField txtRegisterPassword;

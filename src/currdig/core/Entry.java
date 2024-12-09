@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package currdig.core;
 
 import java.io.Serializable;
@@ -9,13 +5,7 @@ import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
-/**
- *
- * @author bmsff
- */
 public class Entry implements Serializable {
-
-    private static final long serialVersionUID = 1L;
 
     private String description;
     private PublicKey entityPublicKey;

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BlockChain implements Serializable {
+
     private static final long serialVersionUID = 202208221009L;
     private ArrayList<Block> chain;
     private Block currentBlock;
@@ -40,21 +41,21 @@ public class BlockChain implements Serializable {
 
         // Get mining target
         String prevHash = getLastBlockHash();
-        
+
         // Create new block with buffered transactions
         Block block = new Block(prevHash);
-        
+
         // Add all buffered transactions to the block
         for (Entry transaction : transactionBuffer) {
             block.addTransaction(transaction);
         }
-        
+
         // Mine the block
         int nonce = Miner.getNonce(prevHash + transactionBuffer.toString(), difficulty);
-        
+
         // Finalize the block with the found nonce
         block.createBlock(prevHash + transactionBuffer.toString(), nonce);
-        
+
         // Add to chain and clear buffer
         chain.add(block);
         System.out.println(block);
@@ -65,7 +66,6 @@ public class BlockChain implements Serializable {
         return chain.get(index);
     }
 
-    
     public List<Block> getChain() {
         return chain;
     }
@@ -94,7 +94,7 @@ public class BlockChain implements Serializable {
                 return false;
             }
         }
-        
+
         for (int i = 1; i < chain.size(); i++) {
             String prevHash = chain.get(i).getPreviousHash();
             String actualPrevHash = chain.get(i - 1).getCurrentHash();
@@ -109,8 +109,8 @@ public class BlockChain implements Serializable {
     public String toString() {
         StringBuilder txt = new StringBuilder();
         txt.append("Blockchain size = ").append(chain.size())
-           .append(" (Pending transactions: ").append(transactionBuffer.size())
-           .append(")\n");
+                .append(" (Pending transactions: ").append(transactionBuffer.size())
+                .append(")\n");
         for (Block block : chain) {
             txt.append(block.toString()).append("\n");
         }
