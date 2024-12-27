@@ -15,6 +15,7 @@
 //////////////////////////////////////////////////////////////////////////////
 package p2p;
 
+import blockchain.utils.BlockChain;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -32,7 +33,7 @@ import currdig.utils.RMI;
  *
  * @author zulu
  */
-public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener{
+public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
 
     OremoteP2P myremoteObject;
 
@@ -180,11 +181,6 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener{
         txtTranaction.setText("transaction to network");
 
         jButton2.setText("Add");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -229,14 +225,14 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener{
             LocateRegistry.createRegistry(port);
             //create adress of remote object
             String address = String.format("//%s:%d/%s", host, port, name);
-            myremoteObject = new OremoteP2P(address,this);
+            myremoteObject = new OremoteP2P(address, this);
             //link adress to object
             Naming.rebind(address, myremoteObject);
         } catch (Exception ex) {
             onException(ex, "Starting server");
             Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
         }
- 
+
     }//GEN-LAST:event_btStartServerActionPerformed
 
     private void txtNodeAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNodeAddressActionPerformed
@@ -251,17 +247,8 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener{
         } catch (Exception ex) {
             onException(ex, "connect");
             Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
-        } 
-    }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        try {
-            myremoteObject.addTransaction(txtTranaction.getText());
-        } catch (RemoteException ex) {
-            onException(ex, "transactions");
-            Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }//GEN-LAST:event_jButton2ActionPerformed
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -390,43 +377,61 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener{
         imgServerRunning.setEnabled(true);
         btStartServer.setEnabled(false);
         GuiUtils.addText(txtServerLog, "Start server", message);
-     }
-    
-      public void onException(Exception e, String title){
-          JOptionPane.showMessageDialog(this, e.getMessage(),title, JOptionPane.WARNING_MESSAGE);
-      }
-    
+    }
+
+    public void onException(Exception e, String title) {
+        JOptionPane.showMessageDialog(this, e.getMessage(), title, JOptionPane.WARNING_MESSAGE);
+    }
 
     @Override
     public void onConect(String address) {
         try {
-            List<IremoteP2P> net =  myremoteObject.getNetwork();
+            List<IremoteP2P> net = myremoteObject.getNetwork();
             String txt = "";
             for (IremoteP2P iremoteP2P : net) {
-                txt+= iremoteP2P.getAdress()+"\n";
+                txt += iremoteP2P.getAddress() + "\n";
             }
             txtNetwork.setText(txt);
         } catch (RemoteException ex) {
             onException(ex, "On conect");
             Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
         }
-       
-        }
+
+    }
 
     @Override
     public void onTransaction(String transaction) {
-        try {
-            String txt = "";
-            List<String> tr = myremoteObject.getTransactions();
-            for (String string : tr) {
-                txt += string + "\n";
-                
-            }
-            txtLstTransdactions.setText(txt);
-        } catch (RemoteException ex) {
-            onException(ex, "on transaction");
-            Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
-        }
-       }
+
+    }
+
+    @Override
+    public void onMessage(String title, String message) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void onStartRemote(String message) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void onStartMining(String message, int zeros) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void onStopMining(String message, int nonce) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void onNounceFound(String message, int nonce) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void onBlockchainUpdate(BlockChain b) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 
 }

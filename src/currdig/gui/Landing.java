@@ -276,6 +276,7 @@ public class Landing extends javax.swing.JFrame {
 
             // Retrieve the user object
             User user = node.getUser(username);
+            user.load(password);
 
             // If no exception was thrown, login is successful
             JOptionPane.showMessageDialog(this, "Login successful!");

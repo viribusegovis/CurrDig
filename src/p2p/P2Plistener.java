@@ -14,18 +14,35 @@
 //::                                                               (c)2024   ::
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //////////////////////////////////////////////////////////////////////////////
-
-
 package p2p;
 
+import blockchain.utils.BlockChain;
+
 /**
- * Created on 27/11/2024, 19:46:43 
+ * Created on 27/11/2024, 19:46:43
+ *
  * @author manso - computer
  */
 public interface P2Plistener {
+
     public void onStart(String message);
+
     public void onConect(String address);
+
     public void onTransaction(String transaction);
+
     public void onException(Exception e, String title);
+
+    public void onMessage(String title, String message);
+
+    public void onStartRemote(String message);
+
+    public void onStartMining(String message, int zeros);
+
+    public void onStopMining(String message, int nonce);
+
+    public void onNounceFound(String message, int nonce);
+
+    public void onBlockchainUpdate(BlockChain b);
 
 }

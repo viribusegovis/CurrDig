@@ -8,16 +8,17 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BlockChain implements Serializable {
 
     private static final long serialVersionUID = 202208221009L;
-    private ArrayList<Block> chain;
+    private CopyOnWriteArrayList<Block> chain;
     private Block currentBlock;
     private List<Entry> transactionBuffer;
 
     public BlockChain() {
-        chain = new ArrayList<>();
+        chain = new CopyOnWriteArrayList<>();
         transactionBuffer = new ArrayList<>();
         currentBlock = new Block(String.format("%08d", 0));
     }

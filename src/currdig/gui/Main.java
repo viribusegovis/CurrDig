@@ -24,6 +24,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
@@ -687,12 +688,15 @@ public class Main extends javax.swing.JFrame {
                 byte[] signature = SecurityUtils.sign(newEntry.toString().getBytes(), this.privKey);
 
                 // Add the Entry to the Curriculum (blockchain)
-                curriculum.addEntry(targetUserPubKey, newEntry, signature);
+                //curriculum.addEntry(targetUserPubKey, newEntry, signature);
+                if (!node.addTransaction(targetUserPubKey, newEntry, signature)) {
+                    throw new Exception();
+                }
 
                 // Clear the input fields
                 jTextAreaDescricao.setText("");
                 txtUser.setText("");
-                curriculum.save(fileCurrDig);
+                //curriculum.save(fileCurrDig);
                 updateHistoryList();
                 JOptionPane.showMessageDialog(this, "Entry added successfully!");
 
@@ -703,6 +707,7 @@ public class Main extends javax.swing.JFrame {
 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error adding entry: " + ex.getMessage());
+                jButtonAdicionar.setEnabled(true);
             } finally {
                 jButtonAdicionar.setEnabled(true);
             }
@@ -734,7 +739,10 @@ public class Main extends javax.swing.JFrame {
     }//GEN-LAST:event_jButtonCriarBlocoActionPerformed
 
     private void updateHistoryList() throws Exception {
-        List<Entry> userEntries = curriculum.getEntriesForEntity(this.pubKey); // Entries issued by this entity
+        //List<Entry> userEntries = curriculum.getEntriesForEntity(this.pubKey); // Entries issued by this entity
+
+        CopyOnWriteArraySet<Entry> userEntries = node.getTransactions();
+
         DefaultListModel<String> listModel = new DefaultListModel<>();
         for (Entry entry : userEntries) {
             String targetUserName = getUsernameByPublicKey(entry.getTargetUserPublicKey());

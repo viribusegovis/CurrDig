@@ -1,28 +1,33 @@
 package p2p;
 
+import currdig.core.Entry;
 import currdig.core.User;
 import java.nio.file.Path;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.security.PublicKey;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public interface IremoteP2P extends Remote {
 
     //:::: N E T WO R K  :::::::::::
-    public String getAdress() throws RemoteException;
+    public String getAddress() throws RemoteException;
 
     public void addNode(IremoteP2P node) throws RemoteException;
 
     public List<IremoteP2P> getNetwork() throws RemoteException;
 
-    //::::::::::: T R A NS A C T IO N S  :::::::::::
-    public void addTransaction(String data) throws RemoteException;
+    //::::::::::: T R A N S A C T I O N S  :::::::::::
+    public int getTransactionsSize() throws RemoteException;
 
-    public List<String> getTransactions() throws RemoteException;
+    public boolean addTransaction(PublicKey targetUserPubKey, Entry entry, byte[] signature) throws RemoteException;
 
-    public void removeTransaction(String data) throws RemoteException;
+    public CopyOnWriteArraySet<Entry> getTransactions() throws RemoteException;
 
-    public void sinchronizeTransactions(IremoteP2P node) throws RemoteException;
+    public void removeTransactions(List<String> transactions) throws RemoteException;
+
+    public void synchronizeTransactions(IremoteP2P node) throws RemoteException;
 
     //::::::::::: TESTE USERS  :::::::::::
     // Add authentication-related methods

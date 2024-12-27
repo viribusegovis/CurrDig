@@ -1,6 +1,7 @@
 package p2p;
 
 import blockchain.utils.SecurityUtils;
+import currdig.core.Entry;
 import currdig.core.User;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -25,14 +26,14 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
     private final String address;
     private final CopyOnWriteArrayList<IremoteP2P> network;
-    private final CopyOnWriteArraySet<String> transactions;
+    private CopyOnWriteArraySet<Entry> transactionBuffer;
     private final P2Plistener listener;
 
     public OremoteP2P(String address, P2Plistener listener) throws RemoteException {
         super(RMI.getAdressPort(address));
         this.address = address;
         this.network = new CopyOnWriteArrayList<>();
-        this.transactions = new CopyOnWriteArraySet<>();
+        this.transactionBuffer = new CopyOnWriteArraySet<>();
         this.listener = listener;
 
         listener.onStart("Object " + address + " listening");
@@ -40,14 +41,14 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     }
 
     @Override
-    public String getAdress() throws RemoteException {
+    public String getAddress() throws RemoteException {
         return address;
     }
 
     private boolean isInNetwork(String address) {
         for (int i = network.size() - 1; i >= 0; i--) {
             try {
-                if (network.get(i).getAdress().equals(address)) {
+                if (network.get(i).getAddress().equals(address)) {
                     return true;
                 }
             } catch (RemoteException ex) {
@@ -60,15 +61,15 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     @Override
     public void addNode(IremoteP2P node) throws RemoteException {
         try {
-            if (isInNetwork(node.getAdress())) {
-                System.out.println("Already have address: " + node.getAdress());
+            if (isInNetwork(node.getAddress())) {
+                System.out.println("Already have address: " + node.getAddress());
                 return;
             }
 
             // Add the new node to the network
             network.add(node);
-            listener.onConect(node.getAdress());
-            System.out.println("Added node: " + node.getAdress());
+            listener.onConect(node.getAddress());
+            System.out.println("Added node: " + node.getAddress());
             node.addNode(this);
 
             // Sync user data between the nodes
@@ -81,7 +82,7 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
             System.out.println("P2P Network:");
             for (IremoteP2P peer : network) {
-                System.out.println(peer.getAdress());
+                System.out.println(peer.getAddress());
             }
         } catch (Exception ex) {
             Logger.getLogger(OremoteP2P.class.getName()).log(Level.SEVERE, null, ex);
@@ -91,42 +92,6 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     @Override
     public List<IremoteP2P> getNetwork() throws RemoteException {
         return new ArrayList<>(network);
-    }
-
-    @Override
-    public void addTransaction(String data) throws RemoteException {
-        if (transactions.contains(data)) {
-            listener.onTransaction("Duplicate transaction: " + data);
-            System.out.println("Duplicate transaction: " + data);
-            return;
-        }
-        transactions.add(data);
-        for (IremoteP2P peer : network) {
-            peer.addTransaction(data);
-        }
-    }
-
-    @Override
-    public List<String> getTransactions() throws RemoteException {
-        return new ArrayList<>(transactions);
-    }
-
-    @Override
-    public void removeTransaction(String data) throws RemoteException {
-        if (!transactions.contains(data)) {
-            System.out.println("Transaction does not exist: " + data);
-            return;
-        }
-        transactions.remove(data);
-        for (IremoteP2P peer : network) {
-            peer.removeTransaction(data);
-        }
-    }
-
-    @Override
-    public void sinchronizeTransactions(IremoteP2P node) throws RemoteException {
-        this.transactions.addAll(node.getTransactions());
-        listener.onTransaction(address);
     }
 
     // ::::::::::::::::::::::::: USER MANAGEMENT ::::::::::::::::::::::::::
@@ -308,7 +273,7 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     private void notifyNodesToSyncUsersData() throws RemoteException {
         for (IremoteP2P peer : network) {
             // Only notify peers that are not the current node itself
-            if (!peer.getAdress().equals(this.address)) {
+            if (!peer.getAddress().equals(this.address)) {
                 peer.syncUserDataFromHost(this);  // Notify other nodes to sync from this node (the host)
             }
         }
@@ -317,8 +282,105 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     @Override
     public void syncUserDataFromHost(IremoteP2P hostNode) throws RemoteException {
         // Sync the UsersData folder from the host node (Node 1)
-        System.out.println("Syncing UsersData from host node: " + hostNode.getAdress());
+        System.out.println("Syncing UsersData from host node: " + hostNode.getAddress());
         hostNode.syncUserDataFolder(this);  // Call the sync function on the host node to get the data
     }
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::            T R A N S A C T I O N S       ::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    @Override
+    public int getTransactionsSize() throws RemoteException {
+        return transactionBuffer.size();
+    }
+
+    @Override
+    public boolean addTransaction(PublicKey targetUserPubKey, Entry entry, byte[] signature) throws RemoteException {
+        try {
+            // Verificar a assinatura
+            if (!SecurityUtils.verifySign(entry.toString().getBytes(), signature, entry.getEntityPublicKey())) {
+                throw new RemoteException("Assinatura inválida");
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(OremoteP2P.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RemoteException("Erro ao verificar a assinatura", ex);
+        }
+
+        synchronized (transactionBuffer) {
+            // Verificar se a transação já existe
+            for (Entry trans : transactionBuffer) {
+                if (entry.getDescription().equals(trans.getDescription())) {
+                    listener.onTransaction("Transação repetida: " + entry.getDescription());
+                    return false; // Não propagar transação duplicada
+                }
+            }
+
+            // Adicionar a transação ao nó local
+            transactionBuffer.add(entry);
+        }
+
+        // Adicionar a transação aos nós da rede (propagação)
+        for (IremoteP2P iremoteP2P : network) {
+            try {
+                if (!iremoteP2P.getAddress().equals(this.address)) { // Evitar enviar de volta ao nó originador
+                    iremoteP2P.addTransaction(targetUserPubKey, entry, signature);
+                }
+            } catch (RemoteException ex) {
+                Logger.getLogger(OremoteP2P.class.getName()).log(Level.SEVERE, "Erro ao propagar transação", ex);
+            }
+        }
+
+        System.out.println("Transação adicionada com sucesso: " + entry.getDescription());
+        
+        return true;
+    }
+
+    @Override
+    public CopyOnWriteArraySet<Entry> getTransactions() throws RemoteException {
+        return new CopyOnWriteArraySet<Entry>(transactionBuffer);
+    }
+
+    @Override
+    public void synchronizeTransactions(IremoteP2P node) throws RemoteException {
+        //tamanho anterior
+        int oldsize = transactionBuffer.size();
+        listener.onMessage("sinchronizeTransactions", node.getAddress());
+        // juntar as transacoes todas (SET elimina as repetidas)
+        this.transactionBuffer.addAll(node.getTransactions());
+        int newSize = transactionBuffer.size();
+        //se o tamanho for incrementado
+        if (oldsize < newSize) {
+            listener.onMessage("sinchronizeTransactions", "tamanho diferente");
+            //pedir ao no para sincronizar com as nossas
+            node.synchronizeTransactions(this);
+            listener.onTransaction(address);
+            listener.onMessage("sinchronizeTransactions", "node.sinchronizeTransactions(this)");
+            //pedir á rede para se sincronizar
+            for (IremoteP2P iremoteP2P : network) {
+                //se o tamanho for menor
+                if (iremoteP2P.getTransactionsSize() < newSize) {
+                    //cincronizar-se com o no actual
+                    listener.onMessage("sinchronizeTransactions", " iremoteP2P.sinchronizeTransactions(this)");
+                    iremoteP2P.synchronizeTransactions(this);
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public void removeTransactions(List<String> myTransactions) throws RemoteException {
+        //remover as transações da lista atural
+        transactionBuffer.removeAll(myTransactions);
+        listener.onTransaction("remove " + myTransactions.size() + "transactions");
+        //propagar as remoções
+        for (IremoteP2P iremoteP2P : network) {
+            //se houver algum elemento em comum nas transações remotas
+            if (iremoteP2P.getTransactions().retainAll(transactionBuffer)) {
+                //remover as transaçoies
+                iremoteP2P.removeTransactions(myTransactions);
+            }
+        }
+
+    }
 }
