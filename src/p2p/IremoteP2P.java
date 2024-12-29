@@ -4,7 +4,6 @@ import blockchain.utils.Block;
 import blockchain.utils.BlockChain;
 import currdig.core.Entry;
 import currdig.core.User;
-import java.nio.file.Path;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.security.PublicKey;
@@ -30,6 +29,10 @@ public interface IremoteP2P extends Remote {
     public void removeTransactions(CopyOnWriteArraySet<Entry> myTransactions) throws RemoteException;
 
     public void synchronizeTransactions(IremoteP2P node) throws RemoteException;
+
+    public List<Entry> getEntriesForEntity(PublicKey entityPublicKey) throws RemoteException;
+
+    public List<Entry> getAllTransactionsFromBC() throws RemoteException;
 
     //::::::::::: TESTE USERS  :::::::::::
     // Add authentication-related methods

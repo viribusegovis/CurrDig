@@ -2,6 +2,8 @@ package blockchain.utils;
 
 import currdig.core.Entry;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class Block implements Serializable {
@@ -9,15 +11,22 @@ public class Block implements Serializable {
     String previousHash;     // link to previous block
     int nonce;              // proof of work 
     String currentHash;     // Hash of block
-    String merkleRoot;  // Merkle Tree
+    CopyOnWriteArraySet<Entry> transactions; // transações do bloco (devem ser guardadas em separado)
+    String merkleRoot;  // Merkle Root
+    MerkleTree merkleTree;  // Merkle Tree
 
     public Block(String previousHash, CopyOnWriteArraySet<Entry> entries) {
         this.previousHash = previousHash;
         this.nonce = 0;
         this.currentHash = null;
+        this.transactions = entries;
 
-        MerkleTree mkt = new MerkleTree(entries.toArray());
-        this.merkleRoot = mkt.getRoot();
+        String[] transactions1 = this.transactions.stream()
+                .map(Entry::toString)
+                .toArray(String[]::new);
+        this.merkleTree = new MerkleTree(transactions1);
+
+        this.merkleRoot = this.merkleTree.getRoot();
     }
 
     public String getPreviousHash() {
@@ -26,6 +35,18 @@ public class Block implements Serializable {
 
     public int getNonce() {
         return nonce;
+    }
+
+    public CopyOnWriteArraySet<Entry> transactions() {
+        return transactions;
+    }
+
+    public String getTransactionsString() {
+        StringBuilder txt = new StringBuilder();
+        for (Entry transaction : transactions) {
+            txt.append(transaction).append("\n");
+        }
+        return txt.toString();
     }
 
     public String calculateHash(String data) {
@@ -39,6 +60,14 @@ public class Block implements Serializable {
 
     public String getCurrentHash() {
         return currentHash;
+    }
+
+    public MerkleTree getMerkleTree() {
+        return merkleTree;
+    }
+
+    public List<Entry> getBuffer() {
+        return new ArrayList<>(transactions);
     }
 
     public String toString() {
@@ -60,6 +89,10 @@ public class Block implements Serializable {
 
     public String getMinerData() {
         return previousHash + merkleRoot;
+    }
+
+    public String getMerkleRoot() {
+        return merkleRoot;
     }
 
     public void setNonce(int nonce, int zeros) throws Exception {

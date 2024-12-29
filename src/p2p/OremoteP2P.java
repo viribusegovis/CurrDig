@@ -22,6 +22,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import blockchain.utils.Miner;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
@@ -29,6 +32,7 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     private final CopyOnWriteArrayList<IremoteP2P> network;
     private CopyOnWriteArraySet<Entry> transactionBuffer;
     private final P2Plistener listener;
+    private Map<PublicKey, List<Entry>> userEntries;
 
     private static final String BLOCHAIN_FILENAME = "currdig.obj";
 
@@ -45,6 +49,7 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
         this.listener = listener;
         myMiner = new Miner(listener);
         myBlockchain = new BlockChain();
+        userEntries = new HashMap<>();
 
         try {
             myBlockchain.load("currdig.obj");
@@ -415,6 +420,32 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
         // Log the state of transactionBuffer after removal
         System.out.println("After removal: " + transactionBuffer);
+    }
+
+    @Override
+    public List<Entry> getEntriesForEntity(PublicKey entityPublicKey) throws RemoteException {
+        List<Entry> entityEntries = new ArrayList<>();
+        for (List<Entry> entries : userEntries.values()) {
+            for (Entry entry : entries) {
+                if (entry.getEntityPublicKey().equals(entityPublicKey)) {
+                    entityEntries.add(entry);
+                }
+            }
+        }
+        return entityEntries;
+    }
+
+    // Instance method to retrieve all transactions from the blockchain
+    public List<Entry> getAllTransactionsFromBC() throws RemoteException {
+        List<Entry> allTransactions = new ArrayList<>();
+
+        // Iterate over each block in the blockchain
+        for (Block block : myBlockchain.getChain()) {
+            // Add the transactions from the block to the list
+            allTransactions.addAll(block.getBuffer());
+        }
+
+        return allTransactions;
     }
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

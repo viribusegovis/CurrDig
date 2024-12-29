@@ -6,6 +6,7 @@ package currdig.gui;
 
 import blockchain.utils.Block;
 import blockchain.utils.BlockChain;
+import blockchain.utils.Hash;
 import blockchain.utils.SecurityUtils;
 import currdig.core.Entry;
 import currdig.core.User;
@@ -21,8 +22,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -109,7 +113,7 @@ public class Main extends javax.swing.JFrame {
         jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 if (!evt.getValueIsAdjusting()) {
-                    displayTransactionDetails();
+                    displayBlockList();
                 }
             }
         });
@@ -171,7 +175,6 @@ public class Main extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jTextFieldNomePesquisar = new javax.swing.JTextField();
-        jSpinner1 = new javax.swing.JSpinner();
         jButtonPesquisarCurr = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -200,6 +203,9 @@ public class Main extends javax.swing.JFrame {
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         txtProof = new javax.swing.JTextField();
+        jButton5 = new javax.swing.JButton();
+        jScrollPane7 = new javax.swing.JScrollPane();
+        jList2 = new javax.swing.JList<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new javax.swing.BoxLayout(getContentPane(), javax.swing.BoxLayout.LINE_AXIS));
@@ -351,7 +357,6 @@ public class Main extends javax.swing.JFrame {
         jPanel3.setName(""); // NOI18N
         jPanel3.setLayout(new javax.swing.BoxLayout(jPanel3, javax.swing.BoxLayout.LINE_AXIS));
         jPanel3.add(jTextFieldNomePesquisar);
-        jPanel3.add(jSpinner1);
 
         jButtonPesquisarCurr.setText("Pesquisar");
         jButtonPesquisarCurr.addActionListener(new java.awt.event.ActionListener() {
@@ -559,21 +564,45 @@ public class Main extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        jButton5.setText("jButton5");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+
+        jList2.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane7.setViewportView(jList2);
+
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
         jPanel8Layout.setHorizontalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel8Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1))
+                    .addGroup(jPanel8Layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton5)))
                 .addContainerGap())
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 316, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
+                    .addGroup(jPanel8Layout.createSequentialGroup()
+                        .addGap(122, 122, 122)
+                        .addComponent(jButton5))
+                    .addComponent(jScrollPane7))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
@@ -651,79 +680,139 @@ public class Main extends javax.swing.JFrame {
         return keyFactory.generatePublic(keySpec);
     }
 
-    //Review this
-    private void displayTransactionDetails() {
-        /*int selectedIndex = jList1.getSelectedIndex();
-        if (selectedIndex != -1) {
-            List<Entry> userEntries = curriculum.getEntriesForEntity(this.pubKey);
-            Entry selectedEntry = userEntries.get(selectedIndex);
+    private List<Block> allBlocks;  // Store blocks globally to avoid issues
 
-            // Find the block containing this entry
-            Block containingBlock = null;
-            int entryIndex = -1;
-            for (Block block : curriculum.getBlockChain().getChain()) {
-                for (int i = 0; i < block.getBuffer().size(); i++) {
-                    Entry entry = block.getBuffer().get(i);
-                    if (entry.toString().equals(selectedEntry.toString())) {
-                        containingBlock = block;
-                        entryIndex = i;
-                        break;
-                    }
-                }
-                if (containingBlock != null) {
-                    break;
-                }
+    private void displayBlockList() {
+        try {
+            // Get all blocks from the blockchain
+            allBlocks = node.getBlockchain().getChain(); // This method returns the list of blocks
+
+            // Check if the blockchain is empty
+            if (allBlocks.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No blocks available in the blockchain.", "Error", JOptionPane.ERROR_MESSAGE);
+                return; // Exit early if no blocks are available
             }
 
-            // Update User's Public Key field
-            jTextField1.setText(Base64.getEncoder().encodeToString(
-                    selectedEntry.getTargetUserPublicKey().getEncoded()));
+            // Create a DefaultListModel to hold the block strings
+            DefaultListModel<String> blockListModel = new DefaultListModel<>();
 
-            // Update Entity's Public Key field
-            txtEntityPublicKey.setText(Base64.getEncoder().encodeToString(
-                    selectedEntry.getEntityPublicKey().getEncoded()));
-
-            // Update Timestamp field
-            txtTimestamp.setText(selectedEntry.getDateTime().toString());
-
-            // Update Description field
-            txtareaDescription.setText(selectedEntry.getDescription());
-
-            // Update Transaction Hash (hash of the entry)
-            txtTransactionHash.setText(Hash.getHash(selectedEntry.toString()));
-
-            txtNonce.setText(containingBlock.getNonce() + "");
-
-            if (containingBlock != null && entryIndex != -1) {
-                // Update Block Hash
-                txtBlockHash.setText(containingBlock.getCurrentHash());
-
-                // Update Merkle Root and Proof
-                if (containingBlock.getMerkleTree() != null) {
-                    List<String> proof = new ArrayList<>();
-                    // Get proof starting from the leaf node
-                    proof = containingBlock.getMerkleTree().getProof(selectedEntry);
-
-                    // Format proof for display
-                    StringBuilder proofText = new StringBuilder();
-                    for (String hash : proof) {
-                        proofText.append(hash).append("\n");
-                    }
-
-                    txtProof.setText(proof.toString());
-                    txtMerkleRoot.setText(containingBlock.getMerkleTree().getRoot());
-                    System.out.println(containingBlock.getMerkleTree().toString());
-                } else {
-                    txtMerkleRoot.setText("Block not finalized");
-                    txtProof.setText("Block not finalized");
-                }
-            } else {
-                txtBlockHash.setText("Transaction not in block");
-                txtMerkleRoot.setText("Transaction not in block");
-                txtProof.setText("Transaction not in block");
+            // Convert the blocks to strings and add them to the list model
+            for (Block block : allBlocks) {
+                blockListModel.addElement("Block Hash: " + block.getCurrentHash()); // Display block hash or any relevant info
             }
-        }*/
+
+            // Set the list model for jList1 (the block list)
+            jList1.setModel(blockListModel);
+
+            // Add a listener to handle block selection
+            jList1.addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting()) {
+                    int selectedIndex = jList1.getSelectedIndex();
+                    if (selectedIndex != -1) {
+                        Block selectedBlock = allBlocks.get(selectedIndex);
+                        displayBlockDetails(selectedBlock); // Display block details
+                        displayTransactionsForBlock(selectedBlock); // Display transactions of selected block
+                        resetTransactionList(); // Clear previous transaction selection in jList2
+                    }
+                }
+            });
+        } catch (RemoteException e) {
+            // Handle any RemoteExceptions if blockchain access fails
+            JOptionPane.showMessageDialog(this, "Error retrieving blocks: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
+
+    private void displayBlockDetails(Block selectedBlock) {
+        // Display Block Hash in the TextBox
+        txtBlockHash.setText(selectedBlock.getCurrentHash()); // Make sure this updates the Block Hash field
+
+        // Clear any previous transaction details
+        clearTransactionDetails();
+    }
+
+    private void displayTransactionsForBlock(Block selectedBlock) {
+        List<Entry> selectedTransactions = selectedBlock.getBuffer();  // Get transactions from the selected block
+
+        // Create a DefaultListModel for jList2 (the transaction list)
+        DefaultListModel<String> transactionListModel = new DefaultListModel<>();
+        for (Entry entry : selectedTransactions) {
+            transactionListModel.addElement("Transaction: " + entry.getDescription() + " - "
+                    + Base64.getEncoder().encodeToString(entry.getTargetUserPublicKey().getEncoded()).substring(0, 10) + "...");
+        }
+
+        // Set the model for jList2
+        jList2.setModel(transactionListModel);
+
+        // Add a listener to handle transaction selection from jList2
+        jList2.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int selectedTransactionIndex = jList2.getSelectedIndex();
+                if (selectedTransactionIndex != -1) {
+                    Entry selectedEntry = selectedTransactions.get(selectedTransactionIndex);
+                    displayTransactionDetailsForEntry(selectedEntry, selectedBlock); // Show transaction details
+                }
+            }
+        });
+    }
+
+    private void resetTransactionList() {
+        // Reset jList2 to remove any previous selections
+        jList2.clearSelection();  // Deselect any previously selected item in jList2
+        clearTransactionDetails(); // Clear any transaction details in the text fields
+    }
+
+    private void displayTransactionDetailsForEntry(Entry selectedEntry, Block selectedBlock) {
+        // Display transaction details in text fields
+
+        // Update User's Public Key field (Target User's Public Key)
+        jTextField1.setText(Base64.getEncoder().encodeToString(selectedEntry.getTargetUserPublicKey().getEncoded()));
+
+        // Update Entity's Public Key field (Entity Public Key)
+        txtEntityPublicKey.setText(Base64.getEncoder().encodeToString(selectedEntry.getEntityPublicKey().getEncoded()));
+
+        // Update Timestamp field (Assume timestamp is available in Entry)
+        txtTimestamp.setText(selectedEntry.getDateTime().toString());
+
+        // Update Description field (Assume description is available in Entry)
+        txtareaDescription.setText(selectedEntry.getDescription());
+
+        // Update Transaction Hash (hash of the entry)
+        txtTransactionHash.setText(Hash.getHash(selectedEntry.toString()));
+
+        // Optionally, add details for Merkle Tree and Proof
+        txtNonce.setText(String.valueOf(selectedBlock.getNonce()));
+
+        // Check if Merkle Tree is available for the selected block
+        if (selectedBlock.getMerkleTree() != null) {
+            List<String> proof = selectedBlock.getMerkleTree().getProof(selectedEntry);
+
+            // Format proof for display
+            StringBuilder proofText = new StringBuilder();
+            for (String hash : proof) {
+                proofText.append(hash).append("\n");
+            }
+
+            txtProof.setText(proofText.toString());
+            txtMerkleRoot.setText(selectedBlock.getMerkleTree().getRoot());
+        } else {
+            txtMerkleRoot.setText("Block not finalized");
+            txtProof.setText("Block not finalized");
+        }
+    }
+
+// Helper method to clear transaction details in text fields
+    private void clearTransactionDetails() {
+        jTextField1.setText("");
+        txtEntityPublicKey.setText("");
+        txtTimestamp.setText("");
+        txtareaDescription.setText("");
+        txtTransactionHash.setText("");
+        txtNonce.setText("");
+        txtProof.setText("");
+        txtMerkleRoot.setText("");
+    }
+
 
     private void jButtonAdicionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAdicionarActionPerformed
         jButtonAdicionar.setEnabled(false);
@@ -867,10 +956,12 @@ public class Main extends javax.swing.JFrame {
         jButtonCriarBloco.setEnabled(true);
     }//GEN-LAST:event_jButton4ActionPerformed
 
-    private void updateHistoryList() throws Exception {
-        //List<Entry> userEntries = curriculum.getEntriesForEntity(this.pubKey); // Entries issued by this entity
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        displayBlockList();
+    }//GEN-LAST:event_jButton5ActionPerformed
 
-        CopyOnWriteArraySet<Entry> userEntries = node.getTransactions();
+    private void updateHistoryList() throws Exception {
+        List<Entry> userEntries = node.getEntriesForEntity(this.pubKey); // Entries issued by this entity
 
         DefaultListModel<String> listModel = new DefaultListModel<>();
         for (Entry entry : userEntries) {
@@ -978,6 +1069,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
     private javax.swing.JButton jButtonAdicionar;
     private javax.swing.JButton jButtonCriarBloco;
     private javax.swing.JButton jButtonListar;
@@ -993,6 +1085,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JList<String> jList1;
+    private javax.swing.JList<String> jList2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -1007,8 +1100,8 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
+    private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JSpinner jSpinner1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTextArea jTextAreaDescricao;
     private javax.swing.JTextField jTextField1;

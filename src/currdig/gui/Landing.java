@@ -81,7 +81,6 @@ public class Landing extends javax.swing.JFrame {
         txtLoginPassword = new javax.swing.JPasswordField();
         jLabel2 = new javax.swing.JLabel();
         lblLogo1 = new javax.swing.JLabel();
-        txtAddress = new javax.swing.JTextField();
         Register = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel();
         txtRegisterUsername = new javax.swing.JTextField();
@@ -117,8 +116,6 @@ public class Landing extends javax.swing.JFrame {
         lblLogo1.setMaximumSize(new java.awt.Dimension(10, 10));
         lblLogo1.setPreferredSize(new java.awt.Dimension(100, 100));
 
-        txtAddress.setText("jTextField1");
-
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -130,10 +127,7 @@ public class Landing extends javax.swing.JFrame {
                     .addComponent(txtLoginPassword, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(txtLoginUsername, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblLogo1, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addComponent(txtAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                    .addComponent(lblLogo1, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -147,9 +141,7 @@ public class Landing extends javax.swing.JFrame {
                 .addComponent(txtLoginUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(txtLoginPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(12, 12, 12)
+                .addGap(40, 40, 40)
                 .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(39, 39, 39))
         );
@@ -378,7 +370,6 @@ public class Landing extends javax.swing.JFrame {
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblLogo;
     private javax.swing.JLabel lblLogo1;
-    private javax.swing.JTextField txtAddress;
     private javax.swing.JPasswordField txtLoginPassword;
     private javax.swing.JTextField txtLoginUsername;
     private javax.swing.JPasswordField txtRegisterPassword;
