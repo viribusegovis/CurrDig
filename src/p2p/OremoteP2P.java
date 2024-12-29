@@ -58,6 +58,9 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
         listener.onStart("Object " + address + " listening");
         System.out.println("Object " + address + " listening");
+
+        // Start the health-check thread
+        startHealthCheck();
     }
 
     @Override
@@ -88,7 +91,7 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
             // Add the new node to the network
             network.add(node);
-            listener.onConect(node.getAddress());
+            listener.onConnect(node.getAddress());
             System.out.println("Added node: " + node.getAddress());
 
             if (!node.getAddress().equals(this.address)) {
@@ -117,6 +120,48 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     @Override
     public List<IremoteP2P> getNetwork() throws RemoteException {
         return new ArrayList<>(network);
+    }
+
+    private void startHealthCheck() {
+        new Thread(() -> {
+            while (true) {
+                try {
+                    List<IremoteP2P> unresponsiveNodes = new ArrayList<>();
+                    List<String> removedAddresses = new ArrayList<>();
+
+                    for (IremoteP2P node : network) {
+                        try {
+                            // Perform a lightweight RMI call to check if the node is responsive
+                            node.getAddress(); // If this call fails, the node is unresponsive
+                        } catch (RemoteException e) {
+                            // Mark the node as unresponsive and record its address
+                            unresponsiveNodes.add(node);
+                            try {
+                                removedAddresses.add(node.getAddress()); // Attempt to retrieve address only once
+                            } catch (RemoteException ignored) {
+                                removedAddresses.add("Unknown address (RemoteException)");
+                            }
+                        }
+                    }
+
+                    // Remove unresponsive nodes from the network
+                    for (IremoteP2P unresponsiveNode : unresponsiveNodes) {
+                        network.remove(unresponsiveNode);
+                    }
+
+                    // Notify about removed nodes
+                    for (String address : removedAddresses) {
+                        listener.onDisconnect("Removed unresponsive node: " + address);
+                        System.out.println("Removed unresponsive node: " + address);
+                    }
+
+                    // Sleep before the next health check cycle
+                    Thread.sleep(10000); // Perform health checks every 10 seconds
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     // ::::::::::::::::::::::::: USER MANAGEMENT ::::::::::::::::::::::::::

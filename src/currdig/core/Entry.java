@@ -5,6 +5,7 @@ import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Objects;
+import currdig.utils.Utils;
 
 public class Entry implements Serializable {
 
@@ -17,7 +18,7 @@ public class Entry implements Serializable {
         this.description = description;
         this.entityPublicKey = entityPublicKey;
         this.targetUserPublicKey = targetUserPublicKey; // Initialize the field
-        this.dateTime = LocalDateTime.now();
+        this.dateTime = Utils.fetchNetworkTime();
     }
 
     public String getDescription() {

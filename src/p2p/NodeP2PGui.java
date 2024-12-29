@@ -13,10 +13,9 @@ import currdig.utils.RMI;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 import javax.swing.JOptionPane;
 
 public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
@@ -280,13 +279,21 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
             btnManual.setEnabled(true);
 
             new Thread(() -> {
-                int PORTD = 12345; // Set a port number for the discovery protocol
+                int initialPort = 12345; // Start with port 12345
+                DatagramSocket socket = null;
 
                 try {
-                    DatagramSocket socket = new DatagramSocket(PORTD);
-                    socket.setBroadcast(true);
-
-                    System.out.println("Peer Discovery Server running...");
+                    // Attempt to bind to the initial or an alternative port
+                    while (socket == null) {
+                        try {
+                            socket = new DatagramSocket(initialPort);
+                            socket.setBroadcast(true);
+                            System.out.println("Peer Discovery Server running on port " + initialPort);
+                        } catch (SocketException e) {
+                            System.out.println("Port " + initialPort + " is in use. Trying next port...");
+                            initialPort++; // Increment port and try again
+                        }
+                    }
 
                     while (true) {
                         byte[] buffer = new byte[256];
@@ -303,6 +310,10 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
+                } finally {
+                    if (socket != null && !socket.isClosed()) {
+                        socket.close();
+                    }
                 }
             }).start();
 
@@ -314,36 +325,50 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
 
     private List<String> discoverServers() {
         List<String> servers = new ArrayList<>();
+        int[] portsToCheck = {12345}; // List of ports to check
+        DatagramSocket socket = null;
+
         try {
-            DatagramSocket socket = new DatagramSocket();
+            socket = new DatagramSocket();  // Create a single socket to send requests
             socket.setSoTimeout(5000); // Timeout after 5 seconds
             InetAddress broadcastAddress = InetAddress.getByName("255.255.255.255");
 
-            // Send broadcast request to discover peers
-            String discoveryMessage = "DISCOVER_P2P_NODE";
-            DatagramPacket requestPacket = new DatagramPacket(discoveryMessage.getBytes(), discoveryMessage.length(), broadcastAddress, 12345);
-            socket.send(requestPacket);
-            System.out.println("Broadcasting discovery message...");
-
-            // Listen for responses
-            long endTime = System.currentTimeMillis() + 5000; // Wait for 5 seconds for responses
-            while (System.currentTimeMillis() < endTime) {
-                byte[] buffer = new byte[256];
-                DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
+            // Loop through each port
+            for (int port : portsToCheck) {
                 try {
-                    socket.receive(responsePacket);
-                    String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
-                    if (response.startsWith("P2P Node:")) {
-                        servers.add(response.substring(10).trim());
+                    // Send broadcast request to discover peers on this port
+                    String discoveryMessage = "DISCOVER_P2P_NODE";
+                    DatagramPacket requestPacket = new DatagramPacket(discoveryMessage.getBytes(), discoveryMessage.length(), broadcastAddress, port);
+                    socket.send(requestPacket);
+                    System.out.println("Broadcasting discovery message on port " + port + "...");
+
+                    // Listen for responses on the current port
+                    long endTime = System.currentTimeMillis() + 5000; // Wait for 5 seconds for responses
+                    while (System.currentTimeMillis() < endTime) {
+                        byte[] buffer = new byte[256];
+                        DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
+                        try {
+                            socket.receive(responsePacket);
+                            String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
+                            if (response.startsWith("P2P Node:")) {
+                                servers.add(response.substring(10).trim());
+                            }
+                        } catch (SocketTimeoutException e) {
+                            break; // No more responses, exit loop
+                        }
                     }
-                } catch (SocketTimeoutException e) {
-                    break; // No more responses, exit loop
+                } catch (IOException e) {
+                    System.out.println("Error while trying to discover servers on port " + port + ": " + e.getMessage());
                 }
             }
-            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
         }
+
         return servers;
     }
 
@@ -481,7 +506,7 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
     }
 
     @Override
-    public void onConect(String address) {
+    public void onConnect(String address) {
         try {
             List<IremoteP2P> net = myremoteObject.getNetwork();
             String txt = "";
@@ -490,7 +515,23 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
             }
             txtNetwork.setText(txt);
         } catch (RemoteException ex) {
-            onException(ex, "On conect");
+            onException(ex, "On connect");
+            Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    @Override
+    public void onDisconnect(String address) {
+        try {
+            List<IremoteP2P> net = myremoteObject.getNetwork();
+            String txt = "";
+            for (IremoteP2P iremoteP2P : net) {
+                txt += iremoteP2P.getAddress() + "\n";
+            }
+            txtNetwork.setText(txt);
+        } catch (RemoteException ex) {
+            onException(ex, "On disconnect");
             Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
         }
 

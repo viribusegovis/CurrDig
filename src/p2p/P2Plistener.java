@@ -27,7 +27,9 @@ public interface P2Plistener {
 
     public void onStart(String message);
 
-    public void onConect(String address);
+    public void onConnect(String address);
+
+    public void onDisconnect(String address);
 
     public void onTransaction(String transaction);
 

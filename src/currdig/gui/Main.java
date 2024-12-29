@@ -22,11 +22,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -73,6 +70,8 @@ public class Main extends javax.swing.JFrame {
 
         initComponents();
         initMyComponents();
+
+        startNodeHealthCheck(); // Start health monitoring
         startMiningMonitor(); // Start the monitoring job
     }
 
@@ -132,6 +131,32 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
+    }
+
+    /**
+     * Start a thread to check the node's health.
+     */
+    private void startNodeHealthCheck() {
+        new Thread(() -> {
+            try {
+                while (true) {
+                    try {
+                        // Perform a lightweight RMI call to check if the node is responsive
+                        node.getAddress(); // If this call fails, the node is unresponsive
+                    } catch (RemoteException e) {
+                        // Notify the user and close the application
+                        JOptionPane.showMessageDialog(this, "Node is unavailable. Closing application.");
+                        System.out.println("Node is unresponsive. Application will exit.");
+                        System.exit(1); // Exit the application
+                    }
+
+                    // Sleep before the next health check
+                    Thread.sleep(5000); // Check every 5 seconds
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private String hashKey(String keyString) {

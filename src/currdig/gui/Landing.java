@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -50,6 +51,8 @@ public class Landing extends javax.swing.JFrame {
             if (!selectedServer.isEmpty()) {
                 node = (IremoteP2P) RMI.getRemote(selectedServer);
                 System.out.println("Connected to remote P2P node at " + selectedServer);
+                
+                startNodeHealthCheck(); // Start health monitoring
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Unexpected error: " + ex.getMessage());
@@ -242,40 +245,96 @@ public class Landing extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
+    
+    /**
+     * Start a thread to check the node's health.
+     */
+    private void startNodeHealthCheck() {
+        new Thread(() -> {
+            try {
+                while (true) {
+                    try {
+                        // Perform a lightweight RMI call to check if the node is responsive
+                        node.getAddress(); // If this call fails, the node is unresponsive
+                    } catch (RemoteException e) {
+                        // Notify the user
+                        JOptionPane.showMessageDialog(this,
+                                "Node is unavailable. Trying to find new server.",
+                                "Node Unavailable",
+                                JOptionPane.WARNING_MESSAGE);
+
+                        // Redirect to Landing page
+                        java.awt.EventQueue.invokeLater(() -> {
+                            try {
+                                new Landing().setVisible(true); // Show the Landing screen
+                            } catch (NotBoundException ex) {
+                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (MalformedURLException ex) {
+                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            this.dispose(); // Close the current Main instance
+                        });
+
+                        break; // Exit the health check loop
+                    }
+
+                    // Sleep before the next health check
+                    Thread.sleep(5000); // Check every 5 seconds
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
     private List<String> discoverServers() {
         List<String> servers = new ArrayList<>();
+        int[] portsToCheck = {12345}; // List of ports to check
+        DatagramSocket socket = null;
+
         try {
-            DatagramSocket socket = new DatagramSocket();
+            socket = new DatagramSocket();  // Create a single socket to send requests
             socket.setSoTimeout(5000); // Timeout after 5 seconds
             InetAddress broadcastAddress = InetAddress.getByName("255.255.255.255");
 
-            // Send broadcast request to discover peers
-            String discoveryMessage = "DISCOVER_P2P_NODE";
-            DatagramPacket requestPacket = new DatagramPacket(discoveryMessage.getBytes(), discoveryMessage.length(), broadcastAddress, 12345);
-            socket.send(requestPacket);
-            System.out.println("Broadcasting discovery message...");
-
-            // Listen for responses
-            long endTime = System.currentTimeMillis() + 5000; // Wait for 5 seconds for responses
-            while (System.currentTimeMillis() < endTime) {
-                byte[] buffer = new byte[256];
-                DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
+            // Loop through each port
+            for (int port : portsToCheck) {
                 try {
-                    socket.receive(responsePacket);
-                    String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
-                    if (response.startsWith("P2P Node:")) {
-                        servers.add(response.substring(10).trim());
+                    // Send broadcast request to discover peers on this port
+                    String discoveryMessage = "DISCOVER_P2P_NODE";
+                    DatagramPacket requestPacket = new DatagramPacket(discoveryMessage.getBytes(), discoveryMessage.length(), broadcastAddress, port);
+                    socket.send(requestPacket);
+                    System.out.println("Broadcasting discovery message on port " + port + "...");
+
+                    // Listen for responses on the current port
+                    long endTime = System.currentTimeMillis() + 5000; // Wait for 5 seconds for responses
+                    while (System.currentTimeMillis() < endTime) {
+                        byte[] buffer = new byte[256];
+                        DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
+                        try {
+                            socket.receive(responsePacket);
+                            String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
+                            if (response.startsWith("P2P Node:")) {
+                                servers.add(response.substring(10).trim());
+                            }
+                        } catch (SocketTimeoutException e) {
+                            break; // No more responses, exit loop
+                        }
                     }
-                } catch (SocketTimeoutException e) {
-                    break; // No more responses, exit loop
+                } catch (IOException e) {
+                    System.out.println("Error while trying to discover servers on port " + port + ": " + e.getMessage());
                 }
             }
-            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
         }
+
         return servers;
     }
+
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         try {
