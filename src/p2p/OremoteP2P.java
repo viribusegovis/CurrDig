@@ -1,6 +1,9 @@
 package p2p;
 
+import blockchain.utils.Block;
+import blockchain.utils.BlockChain;
 import blockchain.utils.SecurityUtils;
+
 import currdig.core.Entry;
 import currdig.core.User;
 import java.rmi.RemoteException;
@@ -14,13 +17,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.security.Key;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import blockchain.utils.Miner;
 
 public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
@@ -29,12 +30,21 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     private CopyOnWriteArraySet<Entry> transactionBuffer;
     private final P2Plistener listener;
 
+    private static final String BLOCHAIN_FILENAME = "currdig.obj";
+
+    //objeto mineiro concorrente e distribuido
+    Miner myMiner;
+    //objeto da blockchain preparada para cesso concorrente
+    BlockChain myBlockchain;
+
     public OremoteP2P(String address, P2Plistener listener) throws RemoteException {
         super(RMI.getAdressPort(address));
         this.address = address;
         this.network = new CopyOnWriteArrayList<>();
         this.transactionBuffer = new CopyOnWriteArraySet<>();
         this.listener = listener;
+        myMiner = new Miner(listener);
+        myBlockchain = new BlockChain();
 
         listener.onStart("Object " + address + " listening");
         System.out.println("Object " + address + " listening");
@@ -70,7 +80,10 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
             network.add(node);
             listener.onConect(node.getAddress());
             System.out.println("Added node: " + node.getAddress());
-            node.addNode(this);
+
+            if (!node.getAddress().equals(this.address)) {
+                node.addNode(this);
+            }
 
             // Sync user data between the nodes
             syncUserDataFolder(node);  // Synchronize user data when a new node joins
@@ -331,7 +344,7 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
         }
 
         System.out.println("Transação adicionada com sucesso: " + entry.getDescription());
-        
+
         return true;
     }
 
@@ -369,18 +382,164 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     }
 
     @Override
-    public void removeTransactions(List<String> myTransactions) throws RemoteException {
-        //remover as transações da lista atural
-        transactionBuffer.removeAll(myTransactions);
-        listener.onTransaction("remove " + myTransactions.size() + "transactions");
-        //propagar as remoções
+    public void removeTransactions(CopyOnWriteArraySet<Entry> myTransactions) throws RemoteException {
+        // Log before removal to check contents
+        System.out.println("Before removal: " + transactionBuffer);
+        System.out.println("Transactions to remove: " + myTransactions);
+
+        // Remove the transactions from the current list
+        boolean removed = transactionBuffer.removeAll(myTransactions);
+        listener.onTransaction("Attempting to remove " + myTransactions.size() + " transactions");
+
+        if (removed) {
+            System.out.println("Transactions removed from buffer: " + myTransactions);
+        } else {
+            System.out.println("No transactions were removed from buffer.");
+        }
+
+        // Propagate the removal to other nodes
         for (IremoteP2P iremoteP2P : network) {
-            //se houver algum elemento em comum nas transações remotas
+            // If there are common transactions in remote node transactions
             if (iremoteP2P.getTransactions().retainAll(transactionBuffer)) {
-                //remover as transaçoies
+                System.out.println("Removing transactions from remote node...");
                 iremoteP2P.removeTransactions(myTransactions);
             }
         }
 
+        // Log the state of transactionBuffer after removal
+        System.out.println("After removal: " + transactionBuffer);
+    }
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //:::::::::::::::::      M I N E R   :::::::::::::::::::::::::::::::::::::::
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //////////////////////////////////////////////////////////////////////////////
+    @Override
+    public void startMining(String msg, int zeros) throws RemoteException {
+        try {
+            //colocar a mineiro a minar
+            myMiner.startMining(msg, zeros);
+            listener.onStartMining(msg, zeros);
+            //mandar minar a rede
+            for (IremoteP2P iremoteP2P : network) {
+                //se o nodo nao estiver a minar
+                if (!iremoteP2P.isMining()) {
+                    listener.onStartMining(iremoteP2P.getAddress() + " mining", zeros);
+                    //iniciar a mineracao no nodo
+                    iremoteP2P.startMining(msg, zeros);
+                }
+            }
+        } catch (Exception ex) {
+            listener.onException(ex, "startMining");
+        }
+
+    }
+
+    @Override
+    public void stopMining(int nonce) throws RemoteException {
+        //parar o mineiro e distribuir o nonce
+        myMiner.stopMining(nonce);
+        //mandar parar a rede
+        for (IremoteP2P iremoteP2P : network) {
+            //se o nodo estiver a minar   
+            if (iremoteP2P.isMining()) {
+                //parar a mineração no nodo 
+                iremoteP2P.stopMining(nonce);
+            }
+        }
+    }
+
+    @Override
+    public int mine(String msg, int zeros) throws RemoteException {
+        try {
+            myMiner.startMining(msg, zeros); // Start the mining process
+
+            // Wait for mining to finish and get the nonce
+            return myMiner.waitToNonce(); // This will block until mining completes
+        } catch (InterruptedException ex) {
+            System.out.println("ERRO A MINAR NO MINE DO REMOTE");
+            listener.onException(ex, "Mine");
+            return -1;
+        } catch (Exception ex) {
+            Logger.getLogger(OremoteP2P.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+
+    }
+
+    @Override
+    public boolean isMining() throws RemoteException {
+        return myMiner.isMining();
+    }
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::: B L O C K C H A I N :::::::::::::::::::::::::::::::::::::::
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //////////////////////////////////////////////////////////////////////////////
+    @Override
+    public void addBlock(Block b) throws RemoteException {
+        try {
+            //se não for válido
+            if (!b.isValid()) {
+                throw new RemoteException("invalid block");
+            }
+            //se encaixar adicionar o bloco
+            if (myBlockchain.getLastBlockHash().equals(b.getPreviousHash())) {
+                myBlockchain.add(b);
+                //guardar a blockchain
+                myBlockchain.save(BLOCHAIN_FILENAME);
+                listener.onBlockchainUpdate(myBlockchain);
+            }
+            //propagar o bloco pela rede
+            for (IremoteP2P iremoteP2P : network) {
+                //se encaixar na blockcahin dos nodos remotos
+                if (!iremoteP2P.getBlockchainLastHash().equals(b.getPreviousHash())
+                        || //ou o tamanho da remota for menor
+                        iremoteP2P.getBlockchainSize() < myBlockchain.getSize()) {
+                    //adicionar o bloco ao nodo remoto
+                    iremoteP2P.addBlock(b);
+                }
+            }
+            //se não encaixou)
+            if (!myBlockchain.getLastBlockHash().equals(b.getCurrentHash())) {
+                //sincronizar a blockchain
+                synchnonizeBlockchain();
+            }
+        } catch (Exception ex) {
+            listener.onException(ex, "Add bloco " + b);
+        }
+    }
+
+    @Override
+    public int getBlockchainSize() throws RemoteException {
+        return myBlockchain.getSize();
+    }
+
+    @Override
+    public String getBlockchainLastHash() throws RemoteException {
+        return myBlockchain.getLastBlockHash();
+    }
+
+    @Override
+    public BlockChain getBlockchain() throws RemoteException {
+        return myBlockchain;
+    }
+
+    @Override
+    public void synchnonizeBlockchain() throws RemoteException {
+        //para todos os nodos da rede
+        for (IremoteP2P iremoteP2P : network) {
+            //se a blockchain for maior
+            if (iremoteP2P.getBlockchainSize() > myBlockchain.getSize()) {
+                BlockChain remote = iremoteP2P.getBlockchain();
+                //e a blockchain for válida
+                if (remote.isValid()) {
+                    //atualizar toda a blockchain
+                    myBlockchain = remote;
+                    //deveria sincronizar apenas os blocos que faltam
+                    listener.onBlockchainUpdate(myBlockchain);
+                }
+            }
+        }
     }
 }

@@ -2,38 +2,22 @@ package blockchain.utils;
 
 import currdig.core.Entry;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class Block implements Serializable {
 
     String previousHash;     // link to previous block
     int nonce;              // proof of work 
     String currentHash;     // Hash of block
-    MerkleTree merkleTree;  // Merkle Tree
-    List<Entry> buffer;     // Buffer for transactions
+    String merkleRoot;  // Merkle Tree
 
-    public Block(String previousHash) {
+    public Block(String previousHash, CopyOnWriteArraySet<Entry> entries) {
         this.previousHash = previousHash;
         this.nonce = 0;
-        this.buffer = new ArrayList<>();
-        this.merkleTree = null;
         this.currentHash = null;
-    }
 
-    public void addTransaction(Entry transaction) {
-        buffer.add(transaction);
-    }
-
-    public void createBlock(String data, int nonce) {
-        this.nonce = nonce;
-        // Convert buffer entries to String array for Merkle tree
-        String[] transactions = buffer.stream()
-                .map(Entry::toString)
-                .toArray(String[]::new);
-        this.merkleTree = new MerkleTree(transactions);
-        this.currentHash = calculateHash(data);
-
+        MerkleTree mkt = new MerkleTree(entries.toArray());
+        this.merkleRoot = mkt.getRoot();
     }
 
     public String getPreviousHash() {
@@ -44,16 +28,8 @@ public class Block implements Serializable {
         return nonce;
     }
 
-    public MerkleTree getMerkleTree() {
-        return merkleTree;
-    }
-
-    public List<Entry> getBuffer() {
-        return new ArrayList<>(buffer);
-    }
-
     public String calculateHash(String data) {
-        if (merkleTree == null) {
+        if (merkleRoot == null) {
             return null;
         }
         //return Hash.getHash(nonce + previousHash + merkleTree.getRoot());
@@ -66,19 +42,43 @@ public class Block implements Serializable {
     }
 
     public String toString() {
-        if (merkleTree == null) {
-            return "Block not finalized - Transactions in buffer: " + buffer.size();
+        if (merkleRoot == null) {
+            return "Block not finalized - Transactions in buffer: ";
         }
         return String.format("[ %8s", previousHash) + " <- "
-                + String.format("%-10s", merkleTree.getRoot())
+                + String.format("%-10s", merkleRoot)
                 + String.format(" %7d ] = ", nonce)
                 + String.format("%8s", currentHash);
     }
 
     public boolean isValid(String data) {
-        if (merkleTree == null || currentHash == null) {
+        if (merkleRoot == null || currentHash == null) {
             return false;
         }
         return currentHash.equals(calculateHash(data));
+    }
+
+    public String getMinerData() {
+        return previousHash + merkleRoot;
+    }
+
+    public void setNonce(int nonce, int zeros) throws Exception {
+        this.nonce = nonce;
+        //calcular o hash
+        this.currentHash = calculateHash();
+        //calcular o prefixo
+        String prefix = String.format("%0" + zeros + "d", 0);
+        if (!currentHash.startsWith(prefix)) {
+            throw new Exception(nonce + " not valid Hash=" + currentHash);
+        }
+
+    }
+
+    public String calculateHash() {
+        return Miner.getHash(getMinerData(), nonce);
+    }
+
+    public boolean isValid() {
+        return currentHash.equals(calculateHash());
     }
 }

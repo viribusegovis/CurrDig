@@ -1,5 +1,7 @@
 package p2p;
 
+import blockchain.utils.Block;
+import blockchain.utils.BlockChain;
 import currdig.core.Entry;
 import currdig.core.User;
 import java.nio.file.Path;
@@ -25,7 +27,7 @@ public interface IremoteP2P extends Remote {
 
     public CopyOnWriteArraySet<Entry> getTransactions() throws RemoteException;
 
-    public void removeTransactions(List<String> transactions) throws RemoteException;
+    public void removeTransactions(CopyOnWriteArraySet<Entry> myTransactions) throws RemoteException;
 
     public void synchronizeTransactions(IremoteP2P node) throws RemoteException;
 
@@ -48,4 +50,24 @@ public interface IremoteP2P extends Remote {
     void receiveFile(String remotePath, byte[] fileData) throws RemoteException;
 
     public void syncUserDataFromHost(IremoteP2P hostNode) throws RemoteException;
+
+    //::::::::::::::::: M I N E R :::::::::::::::::::::::::::::::::::::::::::
+    public void startMining(String msg, int zeros) throws RemoteException;
+
+    public void stopMining(int nonce) throws RemoteException;
+
+    public boolean isMining() throws RemoteException;
+
+    public int mine(String msg, int zeros) throws RemoteException;
+
+    //::::::::::::::::: B L O C K C H A I N :::::::::::::::::::::::::::::::::::::::::::
+    public void addBlock(Block b) throws RemoteException;
+
+    public int getBlockchainSize() throws RemoteException;
+
+    public String getBlockchainLastHash() throws RemoteException;
+
+    public BlockChain getBlockchain() throws RemoteException;
+
+    public void synchnonizeBlockchain() throws RemoteException;
 }

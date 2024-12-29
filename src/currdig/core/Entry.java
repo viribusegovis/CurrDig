@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.Objects;
 
 public class Entry implements Serializable {
 
@@ -48,5 +49,25 @@ public class Entry implements Serializable {
                 + Base64.getEncoder().encodeToString(entityPublicKey.getEncoded()) + "|"
                 + Base64.getEncoder().encodeToString(targetUserPublicKey.getEncoded()) + "|"
                 + dateTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Entry entry = (Entry) o;
+        return Objects.equals(description, entry.description)
+                && Objects.equals(entityPublicKey, entry.entityPublicKey)
+                && Objects.equals(targetUserPublicKey, entry.targetUserPublicKey)
+                && Objects.equals(dateTime, entry.dateTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(description, entityPublicKey, targetUserPublicKey, dateTime);
     }
 }
