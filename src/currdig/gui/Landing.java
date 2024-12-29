@@ -1,25 +1,21 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package currdig.gui;
 
 import currdig.core.User;
 import currdig.utils.RMI;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.SocketTimeoutException;
 import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import p2p.IremoteP2P;
 
-/**
- *
- * @author bmsff
- */
 public class Landing extends javax.swing.JFrame {
 
     private IremoteP2P node;
@@ -30,37 +26,35 @@ public class Landing extends javax.swing.JFrame {
     public Landing() throws NotBoundException, MalformedURLException {
         try {
             initComponents();
+            List<String> availableServers = discoverServers();
+            if (availableServers.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No P2P nodes found. Please try again.");
+                System.exit(0);
+            }
 
-            while (true) {
-                // Prompt the user for the IP address
-                String ipAddress = JOptionPane.showInputDialog(
-                        this,
-                        "Enter the IP address of the remote P2P node:",
-                        "Connect to P2P Node",
-                        JOptionPane.QUESTION_MESSAGE
-                );
+            // Display available servers in a dialog
+            String selectedServer = (String) JOptionPane.showInputDialog(this,
+                    "Select a server to connect to:",
+                    "Server Selection",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    availableServers.toArray(),
+                    availableServers.get(0));
 
-                // Check if the user canceled the prompt
-                if (ipAddress == null) {
-                    JOptionPane.showMessageDialog(this, "Program will now exit as no IP address was provided.");
-                    System.exit(0); // Exit the program
-                }
+            // If the user clicked cancel or closed the dialog, exit the program
+            if (selectedServer == null) {
+                System.exit(0); // Exit the program
+            }
 
-                ipAddress = ipAddress.trim();
-
-                try {
-                    // Attempt to connect to the remote P2P node
-                    node = (IremoteP2P) RMI.getRemote(ipAddress);
-                    System.out.println("Connected to remote P2P node at " + ipAddress);
-                    break; // Exit the loop once connected successfully
-                } catch (RemoteException ex) {
-                    JOptionPane.showMessageDialog(this, "Failed to connect to the P2P node at " + ipAddress + ". Please try again.");
-                }
+            // If a valid server is selected
+            if (!selectedServer.isEmpty()) {
+                node = (IremoteP2P) RMI.getRemote(selectedServer);
+                System.out.println("Connected to remote P2P node at " + selectedServer);
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Unexpected error: " + ex.getMessage());
             ex.printStackTrace();
-            System.exit(1); // Exit the program on unexpected errors
+            System.exit(1);
         }
     }
 
@@ -247,6 +241,41 @@ public class Landing extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
+
+    private List<String> discoverServers() {
+        List<String> servers = new ArrayList<>();
+        try {
+            DatagramSocket socket = new DatagramSocket();
+            socket.setSoTimeout(5000); // Timeout after 5 seconds
+            InetAddress broadcastAddress = InetAddress.getByName("255.255.255.255");
+
+            // Send broadcast request to discover peers
+            String discoveryMessage = "DISCOVER_P2P_NODE";
+            DatagramPacket requestPacket = new DatagramPacket(discoveryMessage.getBytes(), discoveryMessage.length(), broadcastAddress, 12345);
+            socket.send(requestPacket);
+            System.out.println("Broadcasting discovery message...");
+
+            // Listen for responses
+            long endTime = System.currentTimeMillis() + 5000; // Wait for 5 seconds for responses
+            while (System.currentTimeMillis() < endTime) {
+                byte[] buffer = new byte[256];
+                DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
+                try {
+                    socket.receive(responsePacket);
+                    String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
+                    if (response.startsWith("P2P Node:")) {
+                        servers.add(response.substring(10).trim());
+                    }
+                } catch (SocketTimeoutException e) {
+                    break; // No more responses, exit loop
+                }
+            }
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return servers;
+    }
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         try {
