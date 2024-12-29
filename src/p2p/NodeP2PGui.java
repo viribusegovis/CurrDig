@@ -1,25 +1,9 @@
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: 
-//::                                                                         ::
-//::     Antonio Manuel Rodrigues Manso                                      ::
-//::                                                                         ::
-//::     I N S T I T U T O    P O L I T E C N I C O   D E   T O M A R        ::
-//::     Escola Superior de Tecnologia de Tomar                              ::
-//::     e-mail: manso@ipt.pt                                                ::
-//::     url   : http://orion.ipt.pt/~manso                                  ::
-//::                                                                         ::
-//::     This software was build with the purpose of investigate and         ::
-//::     learning.                                                           ::
-//::                                                                         ::
-//::                                                               (c)2015   ::
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//////////////////////////////////////////////////////////////////////////////
 package p2p;
 
 import blockchain.utils.BlockChain;
+import currdig.core.Entry;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.rmi.Naming;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.List;
@@ -28,6 +12,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import currdig.utils.GuiUtils;
 import currdig.utils.RMI;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  *
@@ -379,8 +364,9 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
         GuiUtils.addText(txtServerLog, "Start server", message);
     }
 
+    @Override
     public void onException(Exception e, String title) {
-        JOptionPane.showMessageDialog(this, e.getMessage(), title, JOptionPane.WARNING_MESSAGE);
+
     }
 
     @Override
@@ -401,17 +387,28 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
 
     @Override
     public void onTransaction(String transaction) {
-
+        try {
+            onMessage("Transaction ", transaction);
+            String txt = "";
+            CopyOnWriteArraySet<Entry> tr = myremoteObject.getTransactions();
+            for (Entry string : tr) {
+                txt += string + "\n";
+            }
+            txtLstTransdactions.setText(txt);
+        } catch (RemoteException ex) {
+            onException(ex, "on transaction");
+            Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
     public void onMessage(String title, String message) {
-        throw new UnsupportedOperationException("Not supported yet1."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        System.out.println("message");
     }
 
     @Override
     public void onStartRemote(String message) {
-        throw new UnsupportedOperationException("Not supported yet2."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        GuiUtils.addText(txtServerLog, "Start server", message);
     }
 
     @Override
@@ -425,13 +422,19 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
     }
 
     @Override
-    public void onNounceFound(String threadName, int nonce) {
-        System.out.println("Nonce found by " + threadName + ": " + nonce);
+    public void onBlockchainUpdate(BlockChain b) {
+        System.out.println("Blockchain updated");
     }
 
     @Override
-    public void onBlockchainUpdate(BlockChain b) {
-        System.out.println("Blockchain updated");
+    public void onNonceFound(String message, int nonce) {
+        System.out.println("Nonce found: " + nonce + " by node: " + message);
+
+        try {
+            myremoteObject.stopMining(nonce);
+        } catch (RemoteException ex) {
+            Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 }

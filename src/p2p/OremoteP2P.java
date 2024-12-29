@@ -46,6 +46,11 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
         myMiner = new Miner(listener);
         myBlockchain = new BlockChain();
 
+        try {
+            myBlockchain.load("currdig.obj");
+        } catch (Exception e) {
+        }
+
         listener.onStart("Object " + address + " listening");
         System.out.println("Object " + address + " listening");
     }
@@ -97,6 +102,8 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
             for (IremoteP2P peer : network) {
                 System.out.println(peer.getAddress());
             }
+
+            synchronizeBlockchain();
         } catch (Exception ex) {
             Logger.getLogger(OremoteP2P.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -452,18 +459,14 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     @Override
     public int mine(String msg, int zeros) throws RemoteException {
         try {
-            myMiner.startMining(msg, zeros); // Start the mining process
-
-            // Wait for mining to finish and get the nonce
-            return myMiner.waitToNonce(); // This will block until mining completes
+            //começar a minar a mensagem
+            startMining(msg, zeros);
+            //esperar que o nonce seja calculado
+            return myMiner.waitToNonce();
         } catch (InterruptedException ex) {
-            System.out.println("ERRO A MINAR NO MINE DO REMOTE");
             listener.onException(ex, "Mine");
             return -1;
-        } catch (Exception ex) {
-            Logger.getLogger(OremoteP2P.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return 0;
 
     }
 
@@ -503,7 +506,7 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
             //se não encaixou)
             if (!myBlockchain.getLastBlockHash().equals(b.getCurrentHash())) {
                 //sincronizar a blockchain
-                synchnonizeBlockchain();
+                synchronizeBlockchain();
             }
         } catch (Exception ex) {
             listener.onException(ex, "Add bloco " + b);
@@ -526,7 +529,7 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     }
 
     @Override
-    public void synchnonizeBlockchain() throws RemoteException {
+    public void synchronizeBlockchain() throws RemoteException {
         //para todos os nodos da rede
         for (IremoteP2P iremoteP2P : network) {
             //se a blockchain for maior

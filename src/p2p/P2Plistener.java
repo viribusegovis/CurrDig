@@ -41,7 +41,7 @@ public interface P2Plistener {
 
     public void onStopMining(String message, int nonce);
 
-    public void onNounceFound(String message, int nonce);
+    public void onNonceFound(String message, int nonce);
 
     public void onBlockchainUpdate(BlockChain b);
 

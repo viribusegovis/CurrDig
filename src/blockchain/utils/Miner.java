@@ -60,8 +60,8 @@ public class Miner {
         }
         this.message = message;
         //configurar os atributos    
-        //int numCores = 2;
-        int numCores = Runtime.getRuntime().availableProcessors();
+        int numCores = 1;
+        //int numCores = Runtime.getRuntime().availableProcessors();
         threads = new MinerThread[numCores];
         //inicializar o globalNonce
         globalNonce = new AtomicInteger();
@@ -235,19 +235,19 @@ public class Miner {
                 while (sharedNonce.get() <= 0) {
                     //gerar uma numero e testá-lo
                     int number = Math.abs(ThreadLocalRandom.current().nextInt());
-                    /*if (listener != null && number % 368 == 0) {
+                    if (listener != null && number % 368 == 0) {
                         listener.onException(new Exception(number + ""), "number");
-                    }*/
+                    }
 
                     //verificar se o hash esta correto
                     if (getThreadHash(message, number).startsWith(prefix)) {
                         //atualizar o nonce e terminar as threads
                         sharedNonce.set(number);
                         //notifificar os listeners
-                        /*if (listener != null) {
+                        if (listener != null) {
                             listener.onException(new Exception(number + ""), "nonce");
-                            listener.onNounceFound(Thread.currentThread().getName(), number);
-                        }*/
+                            listener.onNonceFound(Thread.currentThread().getName(), number);
+                        }
                     }
                 }
                 //notificar os listeners que a thread terminou

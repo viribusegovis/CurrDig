@@ -69,5 +69,5 @@ public interface IremoteP2P extends Remote {
 
     public BlockChain getBlockchain() throws RemoteException;
 
-    public void synchnonizeBlockchain() throws RemoteException;
+    public void synchronizeBlockchain() throws RemoteException;
 }

@@ -28,7 +28,7 @@ public class MiningApp {
             }
 
             @Override
-            public void onNounceFound(String threadName, int nonce) {
+            public void onNonceFound(String threadName, int nonce) {
                 System.out.println("Nonce found by " + threadName + ": " + nonce);
             }
 

@@ -30,6 +30,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import p2p.IremoteP2P;
@@ -68,6 +69,7 @@ public class Main extends javax.swing.JFrame {
 
         initComponents();
         initMyComponents();
+        startMiningMonitor(); // Start the monitoring job
     }
 
     private void initMyComponents() {
@@ -772,42 +774,57 @@ public class Main extends javax.swing.JFrame {
         performSearch();
     }//GEN-LAST:event_jButtonPesquisarCurrActionPerformed
 
+    private volatile boolean isMining = false;
+
     private void jButtonCriarBlocoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCriarBlocoActionPerformed
         // Disable the button to prevent multiple clicks
         jButtonCriarBloco.setEnabled(false);
+        isMining = true; // Mark mining as in progress
 
         new Thread(() -> {
             try {
                 // Make a block
                 CopyOnWriteArraySet<Entry> blockTransactions = node.getTransactions();
-                if (blockTransactions.size() < 0) {
+                if (blockTransactions.isEmpty()) {
                     return;
                 }
                 Block b = new Block(node.getBlockchainLastHash(), blockTransactions);
+
                 // Remove the transactions
                 node.removeTransactions(blockTransactions);
 
                 // Start mining the block
                 int zeros = 4;
-                // Mine the block and wait until the nonce is found
-                int nonce = node.mine(b.getMinerData(), zeros); // This should block until mining completes
+                int nonce = node.mine(b.getMinerData(), zeros); // Blocks until mining completes
 
-                System.out.println("OLA SOU O NONCE" + nonce);
+                System.out.println("Nonce found: " + nonce);
+                isMining = false;
 
-                // Update the nonce
+                // Update the nonce and add the block
                 b.setNonce(nonce, zeros);
-                // Add the block
                 node.addBlock(b);
             } catch (IOException e) {
                 System.err.println("Failed to save blockchain: " + e.getMessage());
             } catch (Exception ex) {
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
-                // Re-enable the button once the operation is complete
-                SwingUtilities.invokeLater(() -> jButtonCriarBloco.setEnabled(true));
+                isMining = false; // Mark mining as complete
             }
         }).start();
     }//GEN-LAST:event_jButtonCriarBlocoActionPerformed
+
+    private void startMiningMonitor() {
+        Timer miningMonitor = new Timer(1000, e -> {
+            // Run this check every second
+            SwingUtilities.invokeLater(() -> {
+                if (!isMining) {
+                    jButtonCriarBloco.setEnabled(true);
+                }
+            });
+        });
+        miningMonitor.start(); // Start the timer
+    }
+
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         try {
