@@ -23,8 +23,10 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import blockchain.utils.Miner;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
@@ -40,6 +42,8 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     Miner myMiner;
     //objeto da blockchain preparada para cesso concorrente
     BlockChain myBlockchain;
+
+    private final ScheduledExecutorService executorService;
 
     public OremoteP2P(String address, P2Plistener listener) throws RemoteException {
         super(RMI.getAdressPort(address));
@@ -61,6 +65,56 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
         // Start the health-check thread
         startHealthCheck();
+
+        // Set up periodic block creation task every 30 seconds
+        executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService.scheduleAtFixedRate(this::checkAndMineBlock, 0, 30, TimeUnit.SECONDS);
+
+    }
+
+    // Method to check if there are pending transactions and announce mining
+    private void checkAndMineBlock() {
+        try {
+            // If there are pending transactions, we will mine
+            if (!getTransactions().isEmpty()) {
+                // Start mining the block
+                mineBlock();
+            } else {
+                System.out.println("Checked and there are no transactions!");
+            }
+
+        } catch (Exception e) {
+        }
+    }
+
+    // Mine the block
+    private void mineBlock() throws Exception {
+        // Make a block if there are any transactions
+        CopyOnWriteArraySet<Entry> blockTransactions = getTransactions();
+
+        if (blockTransactions.isEmpty()) {
+            System.out.println("No transactions to mine.");
+            return;
+        }
+
+        for (IremoteP2P peer : network) {
+            peer.removeTransactions(blockTransactions);
+        }
+
+        // Create the block with the transactions
+        Block b = new Block(myBlockchain.getLastBlockHash(), blockTransactions);
+
+        // Start mining the block
+        int zeros = 4; // Difficulty level (number of leading zeros)
+        int nonce = mine(b.getMinerData(), zeros); // Block mining process
+
+        System.out.println("Block mined, nonce found: " + nonce);
+
+        // Update the nonce and add the block to the blockchain
+        b.setNonce(nonce, zeros);
+        addBlock(b);
+
+        System.out.println("Block added to blockchain by " + address);
     }
 
     @Override
@@ -156,7 +210,7 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
                     }
 
                     // Sleep before the next health check cycle
-                    Thread.sleep(10000); // Perform health checks every 10 seconds
+                    Thread.sleep(5000); // Perform health checks every 5 seconds
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -556,38 +610,47 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     //////////////////////////////////////////////////////////////////////////////
     @Override
-    public void addBlock(Block b) throws RemoteException {
+public void addBlock(Block b) throws RemoteException {
+    try {
+        // Validate the block
+        if (!b.isValid()) {
+            throw new RemoteException("invalid block");
+        }
+
+        // Check if the block fits with the blockchain
+        if (myBlockchain.getLastBlockHash().equals(b.getPreviousHash())) {
+            // Add the block to the local blockchain
+            myBlockchain.add(b);
+
+            // Save the blockchain to the file
+            myBlockchain.save(BLOCHAIN_FILENAME);
+            listener.onBlockchainUpdate(myBlockchain);
+
+            // Propagate the block to the network (to avoid infinite loops, use a flag)
+            propagateBlock(b);
+        } else {
+            // If the block doesn't fit, synchronize the blockchain
+            System.out.println("Block does not fit, synchronizing...");
+            synchronizeBlockchain();
+        }
+
+    } catch (Exception ex) {
+        listener.onException(ex, "Add block " + b);
+    }
+}
+
+private void propagateBlock(Block b) throws RemoteException {
+    // Propagate the block to all peers in the network
+    for (IremoteP2P peer : network) {
         try {
-            //se não for válido
-            if (!b.isValid()) {
-                throw new RemoteException("invalid block");
-            }
-            //se encaixar adicionar o bloco
-            if (myBlockchain.getLastBlockHash().equals(b.getPreviousHash())) {
-                myBlockchain.add(b);
-                //guardar a blockchain
-                myBlockchain.save(BLOCHAIN_FILENAME);
-                listener.onBlockchainUpdate(myBlockchain);
-            }
-            //propagar o bloco pela rede
-            for (IremoteP2P iremoteP2P : network) {
-                //se encaixar na blockcahin dos nodos remotos
-                if (!iremoteP2P.getBlockchainLastHash().equals(b.getPreviousHash())
-                        || //ou o tamanho da remota for menor
-                        iremoteP2P.getBlockchainSize() < myBlockchain.getSize()) {
-                    //adicionar o bloco ao nodo remoto
-                    iremoteP2P.addBlock(b);
-                }
-            }
-            //se não encaixou)
-            if (!myBlockchain.getLastBlockHash().equals(b.getCurrentHash())) {
-                //sincronizar a blockchain
-                synchronizeBlockchain();
-            }
-        } catch (Exception ex) {
-            listener.onException(ex, "Add bloco " + b);
+            // Ensure that the block is only added once per peer
+            peer.addBlock(b);
+        } catch (RemoteException e) {
+            System.err.println("Error propagating block to " + peer.getAddress());
         }
     }
+}
+
 
     @Override
     public int getBlockchainSize() throws RemoteException {

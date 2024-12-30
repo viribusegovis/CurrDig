@@ -184,8 +184,6 @@ public class Main extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
-        jButtonAdicionar = new javax.swing.JButton();
-        jButtonCriarBloco = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextAreaDescricao = new javax.swing.JTextArea();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -195,6 +193,9 @@ public class Main extends javax.swing.JFrame {
         jSeparator2 = new javax.swing.JSeparator();
         jButtonListar = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        jButtonAdicionar = new javax.swing.JButton();
+        jButtonCriarBloco = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jTextFieldNomePesquisar = new javax.swing.JTextField();
@@ -202,8 +203,6 @@ public class Main extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         listUsers = new javax.swing.JList<>();
-        jButton3 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
         jPanel8 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<>();
@@ -241,22 +240,6 @@ public class Main extends javax.swing.JFrame {
 
         jPanel5.setBackground(new java.awt.Color(255, 255, 255));
         jPanel5.setLayout(new java.awt.BorderLayout());
-
-        jButtonAdicionar.setText("Adicionar");
-        jButtonAdicionar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonAdicionarActionPerformed(evt);
-            }
-        });
-        jPanel5.add(jButtonAdicionar, java.awt.BorderLayout.CENTER);
-
-        jButtonCriarBloco.setText("Criar Bloco");
-        jButtonCriarBloco.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonCriarBlocoActionPerformed(evt);
-            }
-        });
-        jPanel5.add(jButtonCriarBloco, java.awt.BorderLayout.PAGE_END);
 
         jTextAreaDescricao.setColumns(20);
         jTextAreaDescricao.setLineWrap(true);
@@ -297,6 +280,27 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
+        jButton2.setText("transacoes ativas");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
+        jButtonAdicionar.setText("Adicionar");
+        jButtonAdicionar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonAdicionarActionPerformed(evt);
+            }
+        });
+
+        jButtonCriarBloco.setText("Criar Bloco (Not needed)");
+        jButtonCriarBloco.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonCriarBlocoActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -308,13 +312,16 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(jScrollPane2)
                     .addComponent(jScrollPane3)
                     .addComponent(jScrollPane6)
-                    .addComponent(jButtonListar, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
-                    .addComponent(jSeparator2))
+                    .addComponent(jButtonListar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jSeparator2)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton2)
+                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButtonAdicionar, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButtonCriarBloco, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jButton1)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addGap(83, 83, 83)
@@ -330,11 +337,17 @@ public class Main extends javax.swing.JFrame {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(29, 29, 29)
+                .addGap(18, 18, 18)
+                .addComponent(jButton2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 115, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButtonListar)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButtonAdicionar)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButtonCriarBloco)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -343,7 +356,7 @@ public class Main extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addGap(304, 304, 304)
                     .addComponent(jLabel3)
-                    .addContainerGap(79, Short.MAX_VALUE)))
+                    .addContainerGap(269, Short.MAX_VALUE)))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Pesquisa por nome"));
@@ -380,7 +393,9 @@ public class Main extends javax.swing.JFrame {
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane4)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
@@ -395,57 +410,28 @@ public class Main extends javax.swing.JFrame {
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
-
-        jButton3.setText("mostrar blockchain bloco");
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
-            }
-        });
-
-        jButton2.setText("transacoes ativas");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel7Layout.createSequentialGroup()
-                .addGap(14, 14, 14)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton3)
-                    .addComponent(jButton2))
-                .addContainerGap(744, Short.MAX_VALUE))
-            .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel7Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addContainerGap()))
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
-                .addContainerGap(448, Short.MAX_VALUE)
-                .addComponent(jButton2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton3)
-                .addGap(156, 156, 156))
-            .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel7Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap()))
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 561, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(107, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Submitions", jPanel7);
@@ -620,10 +606,6 @@ public class Main extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void jButtonListarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonListarActionPerformed
-        listUsers();
-    }//GEN-LAST:event_jButtonListarActionPerformed
 
     private void listUsers() {
         try {
@@ -819,6 +801,101 @@ public class Main extends javax.swing.JFrame {
     }
 
 
+    private void jButtonPesquisarCurrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonPesquisarCurrActionPerformed
+        performSearch();
+    }//GEN-LAST:event_jButtonPesquisarCurrActionPerformed
+
+    private volatile boolean isMining = false;
+
+    private void startMiningMonitor() {
+        Timer miningMonitor = new Timer(1000, e -> {
+            // Run this check every second
+            SwingUtilities.invokeLater(() -> {
+                if (!isMining) {
+                    jButtonCriarBloco.setEnabled(true);
+                }
+            });
+        });
+        miningMonitor.start(); // Start the timer
+    }
+
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        try {
+            JOptionPane.showMessageDialog(null, node.getTransactions(), "Notification", JOptionPane.INFORMATION_MESSAGE);
+        } catch (RemoteException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        displayBlockList();
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        try {
+            // Assuming you have already fetched the blockchain from the node
+            BlockChain blockchain = node.getBlockchain();  // node.getBlockchain() loads the blockchain
+
+            // Open the Blockchain Explorer UI in a separate thread to avoid blocking
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        new blockchain.utils.BlockchainExplorer(blockchain, node);
+                    } catch (RemoteException ex) {
+                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Failed to load blockchain", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButtonListarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonListarActionPerformed
+        listUsers();
+    }//GEN-LAST:event_jButtonListarActionPerformed
+
+    private void jButtonCriarBlocoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCriarBlocoActionPerformed
+        // Disable the button to prevent multiple clicks
+        jButtonCriarBloco.setEnabled(false);
+        isMining = true; // Mark mining as in progress
+
+        new Thread(() -> {
+            try {
+                // Make a block
+                CopyOnWriteArraySet<Entry> blockTransactions = node.getTransactions();
+                if (blockTransactions.isEmpty()) {
+                    return;
+                }
+                Block b = new Block(node.getBlockchainLastHash(), blockTransactions);
+
+                // Remove the transactions
+                node.removeTransactions(blockTransactions);
+
+                // Start mining the block
+                int zeros = 4;
+                int nonce = node.mine(b.getMinerData(), zeros); // Blocks until mining completes
+
+                System.out.println("Nonce found: " + nonce);
+                isMining = false;
+
+                // Update the nonce and add the block
+                b.setNonce(nonce, zeros);
+                node.addBlock(b);
+            } catch (IOException e) {
+                System.err.println("Failed to save blockchain: " + e.getMessage());
+            } catch (Exception ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                isMining = false; // Mark mining as complete
+            }
+        }).start();
+    }//GEN-LAST:event_jButtonCriarBlocoActionPerformed
+
     private void jButtonAdicionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAdicionarActionPerformed
         jButtonAdicionar.setEnabled(false);
 
@@ -863,118 +940,6 @@ public class Main extends javax.swing.JFrame {
             }
         }).start();
     }//GEN-LAST:event_jButtonAdicionarActionPerformed
-
-    private void jButtonPesquisarCurrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonPesquisarCurrActionPerformed
-        performSearch();
-    }//GEN-LAST:event_jButtonPesquisarCurrActionPerformed
-
-    private volatile boolean isMining = false;
-
-    private void jButtonCriarBlocoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCriarBlocoActionPerformed
-        // Disable the button to prevent multiple clicks
-        jButtonCriarBloco.setEnabled(false);
-        isMining = true; // Mark mining as in progress
-
-        new Thread(() -> {
-            try {
-                // Make a block
-                CopyOnWriteArraySet<Entry> blockTransactions = node.getTransactions();
-                if (blockTransactions.isEmpty()) {
-                    return;
-                }
-                Block b = new Block(node.getBlockchainLastHash(), blockTransactions);
-
-                // Remove the transactions
-                node.removeTransactions(blockTransactions);
-
-                // Start mining the block
-                int zeros = 4;
-                int nonce = node.mine(b.getMinerData(), zeros); // Blocks until mining completes
-
-                System.out.println("Nonce found: " + nonce);
-                isMining = false;
-
-                // Update the nonce and add the block
-                b.setNonce(nonce, zeros);
-                node.addBlock(b);
-            } catch (IOException e) {
-                System.err.println("Failed to save blockchain: " + e.getMessage());
-            } catch (Exception ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            } finally {
-                isMining = false; // Mark mining as complete
-            }
-        }).start();
-    }//GEN-LAST:event_jButtonCriarBlocoActionPerformed
-
-    private void startMiningMonitor() {
-        Timer miningMonitor = new Timer(1000, e -> {
-            // Run this check every second
-            SwingUtilities.invokeLater(() -> {
-                if (!isMining) {
-                    jButtonCriarBloco.setEnabled(true);
-                }
-            });
-        });
-        miningMonitor.start(); // Start the timer
-    }
-
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        try {
-            // Assuming you have already fetched the blockchain from the node
-            BlockChain blockchain = node.getBlockchain();  // node.getBlockchain() loads the blockchain
-
-            // Open the Blockchain Explorer UI in a separate thread to avoid blocking
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        new blockchain.utils.BlockchainExplorer(blockchain, node);
-                    } catch (RemoteException ex) {
-                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            });
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Failed to load blockchain", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        try {
-            JOptionPane.showMessageDialog(null, node.getTransactions(), "Notification", JOptionPane.INFORMATION_MESSAGE);
-        } catch (RemoteException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }//GEN-LAST:event_jButton2ActionPerformed
-
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        try {
-            // Get the entire blockchain from the node
-            BlockChain blockchain = node.getBlockchain();
-
-            // Create a string to display all blocks
-            StringBuilder blockchainInfo = new StringBuilder("Blockchain Information:\n");
-
-            // Assuming BlockChain has a method to iterate over blocks
-            for (Block block : blockchain.getChain()) { // You might need to replace getBlocks() with the appropriate method
-                blockchainInfo.append(block.toString()).append("\n"); // Append block info
-            }
-
-            // Display the blockchain information in a message dialog
-            JOptionPane.showMessageDialog(null, blockchainInfo.toString(), "Blockchain Notification", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (RemoteException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }//GEN-LAST:event_jButton3ActionPerformed
-
-    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        displayBlockList();
-    }//GEN-LAST:event_jButton5ActionPerformed
 
     private void updateHistoryList() throws Exception {
         List<Entry> userEntries = node.getEntriesForEntity(this.pubKey); // Entries issued by this entity
@@ -1083,7 +1048,6 @@ public class Main extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButtonAdicionar;
     private javax.swing.JButton jButtonCriarBloco;

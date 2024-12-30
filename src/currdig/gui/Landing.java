@@ -2,6 +2,7 @@ package currdig.gui;
 
 import currdig.core.User;
 import currdig.utils.RMI;
+import currdig.utils.Utils;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -27,7 +28,7 @@ public class Landing extends javax.swing.JFrame {
     public Landing() throws NotBoundException, MalformedURLException {
         try {
             initComponents();
-            List<String> availableServers = discoverServers();
+            List<String> availableServers = Utils.discoverServers();
             if (availableServers.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "No P2P nodes found. Please try again.");
                 System.exit(0);
@@ -286,54 +287,7 @@ public class Landing extends javax.swing.JFrame {
             }
         }).start();
     }
-    private List<String> discoverServers() {
-        List<String> servers = new ArrayList<>();
-        int[] portsToCheck = {12345}; // List of ports to check
-        DatagramSocket socket = null;
-
-        try {
-            socket = new DatagramSocket();  // Create a single socket to send requests
-            socket.setSoTimeout(5000); // Timeout after 5 seconds
-            InetAddress broadcastAddress = InetAddress.getByName("255.255.255.255");
-
-            // Loop through each port
-            for (int port : portsToCheck) {
-                try {
-                    // Send broadcast request to discover peers on this port
-                    String discoveryMessage = "DISCOVER_P2P_NODE";
-                    DatagramPacket requestPacket = new DatagramPacket(discoveryMessage.getBytes(), discoveryMessage.length(), broadcastAddress, port);
-                    socket.send(requestPacket);
-                    System.out.println("Broadcasting discovery message on port " + port + "...");
-
-                    // Listen for responses on the current port
-                    long endTime = System.currentTimeMillis() + 5000; // Wait for 5 seconds for responses
-                    while (System.currentTimeMillis() < endTime) {
-                        byte[] buffer = new byte[256];
-                        DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
-                        try {
-                            socket.receive(responsePacket);
-                            String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
-                            if (response.startsWith("P2P Node:")) {
-                                servers.add(response.substring(10).trim());
-                            }
-                        } catch (SocketTimeoutException e) {
-                            break; // No more responses, exit loop
-                        }
-                    }
-                } catch (IOException e) {
-                    System.out.println("Error while trying to discover servers on port " + port + ": " + e.getMessage());
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
-        }
-
-        return servers;
-    }
+    
 
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
