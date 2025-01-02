@@ -61,6 +61,9 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
         jList1 = new javax.swing.JList<>();
         btnFind = new javax.swing.JButton();
         btnManual = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        jTextArea1 = new javax.swing.JTextArea();
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -74,6 +77,7 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
         );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Digital Curriculum Node");
 
         pnServer.setLayout(new java.awt.BorderLayout());
 
@@ -157,7 +161,7 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
                 .addContainerGap()
                 .addGroup(pnNetworkLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 459, Short.MAX_VALUE)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 457, Short.MAX_VALUE)
                     .addGroup(pnNetworkLayout.createSequentialGroup()
                         .addComponent(txtNodeAddress)
                         .addGap(18, 18, 18)
@@ -184,10 +188,36 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
                 .addComponent(btnConnect)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(53, Short.MAX_VALUE))
+                .addContainerGap(168, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("P2pNetwork", pnNetwork);
+
+        jTextArea1.setEditable(false);
+        jTextArea1.setColumns(20);
+        jTextArea1.setLineWrap(true);
+        jTextArea1.setRows(5);
+        jTextArea1.setText("Java Application consisting of a Digital Curriculum implemented using Blockchain protocols to maintain integrity and safety.\n\nMade by:\n23193 Vasco Alves\n22912 Bruno Freitas");
+        jScrollPane3.setViewportView(jTextArea1);
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap(45, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 388, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(42, 42, 42))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(55, 55, 55)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 228, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(230, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("About", jPanel2);
 
         getContentPane().add(jTabbedPane1, java.awt.BorderLayout.PAGE_START);
 
@@ -427,12 +457,15 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
     private javax.swing.JLabel imgServerRunning;
     private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JPanel pnNetwork;
     private javax.swing.JPanel pnServer;
     private javax.swing.JTextArea txtNetwork;

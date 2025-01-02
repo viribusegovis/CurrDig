@@ -81,9 +81,11 @@ public class Landing extends javax.swing.JFrame {
         txtRegisterPassword = new javax.swing.JPasswordField();
         jLabel1 = new javax.swing.JLabel();
         About = new javax.swing.JPanel();
-        jLabel3 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTextArea1 = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Digital Curriculum Entity View");
 
         jPanel4.setBackground(new java.awt.Color(255, 255, 255));
         jPanel4.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -201,23 +203,28 @@ public class Landing extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Register", Register);
 
-        jLabel3.setText("Made by Vasco Alves 23193 and Bruno Freitas 22912");
+        jTextArea1.setEditable(false);
+        jTextArea1.setColumns(20);
+        jTextArea1.setLineWrap(true);
+        jTextArea1.setRows(5);
+        jTextArea1.setText("Java Application consisting of a Digital Curriculum implemented using Blockchain protocols to maintain integrity and safety.\n\nMade by:\n23193 Vasco Alves\n22912 Bruno Freitas");
+        jScrollPane1.setViewportView(jTextArea1);
 
         javax.swing.GroupLayout AboutLayout = new javax.swing.GroupLayout(About);
         About.setLayout(AboutLayout);
         AboutLayout.setHorizontalGroup(
             AboutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(AboutLayout.createSequentialGroup()
-                .addGap(261, 261, 261)
-                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(297, Short.MAX_VALUE))
+                .addGap(81, 81, 81)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 388, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(94, Short.MAX_VALUE))
         );
         AboutLayout.setVerticalGroup(
             AboutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(AboutLayout.createSequentialGroup()
-                .addGap(160, 160, 160)
-                .addComponent(jLabel3)
-                .addContainerGap(355, Short.MAX_VALUE))
+                .addGap(97, 97, 97)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 228, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(188, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("About", About);
@@ -400,10 +407,11 @@ public class Landing extends javax.swing.JFrame {
     private javax.swing.JButton btnRegister;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JLabel lblLogo;
     private javax.swing.JLabel lblLogo1;
     private javax.swing.JPasswordField txtLoginPassword;

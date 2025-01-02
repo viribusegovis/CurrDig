@@ -231,6 +231,7 @@ public class Main extends javax.swing.JFrame {
         jList2 = new javax.swing.JList<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Digital Curriculum Entity View");
         getContentPane().setLayout(new javax.swing.BoxLayout(getContentPane(), javax.swing.BoxLayout.LINE_AXIS));
 
         jTabbedPane1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
@@ -244,57 +245,59 @@ public class Main extends javax.swing.JFrame {
         jTextAreaDescricao.setColumns(20);
         jTextAreaDescricao.setLineWrap(true);
         jTextAreaDescricao.setRows(5);
-        jTextAreaDescricao.setBorder(javax.swing.BorderFactory.createTitledBorder("Descrição"));
+        jTextAreaDescricao.setBorder(javax.swing.BorderFactory.createTitledBorder("Description"));
         jTextAreaDescricao.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         jScrollPane2.setViewportView(jTextAreaDescricao);
+        jTextAreaDescricao.getAccessibleContext().setAccessibleName("Description");
 
         txtEntity.setEditable(false);
         txtEntity.setBackground(new java.awt.Color(255, 255, 255));
         txtEntity.setColumns(20);
         txtEntity.setLineWrap(true);
         txtEntity.setRows(5);
-        txtEntity.setBorder(javax.swing.BorderFactory.createTitledBorder("Entidade"));
+        txtEntity.setBorder(javax.swing.BorderFactory.createTitledBorder("Entity"));
         txtEntity.setFocusable(false);
         jScrollPane3.setViewportView(txtEntity);
+        txtEntity.getAccessibleContext().setAccessibleName("Entity");
 
         txtUser.setEditable(false);
         txtUser.setBackground(new java.awt.Color(255, 255, 255));
         txtUser.setColumns(20);
         txtUser.setLineWrap(true);
         txtUser.setRows(5);
-        txtUser.setBorder(javax.swing.BorderFactory.createTitledBorder("Utilizador"));
+        txtUser.setBorder(javax.swing.BorderFactory.createTitledBorder("User"));
         txtUser.setFocusable(false);
         jScrollPane6.setViewportView(txtUser);
 
-        jButtonListar.setText("Atualizar Lista");
+        jButtonListar.setText("Refresh List");
         jButtonListar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonListarActionPerformed(evt);
             }
         });
 
-        jButton1.setText("mostrar bc");
+        jButton1.setText("Blockchain Explorer");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
             }
         });
 
-        jButton2.setText("transacoes ativas");
+        jButton2.setText("Active Transactions");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton2ActionPerformed(evt);
             }
         });
 
-        jButtonAdicionar.setText("Adicionar");
+        jButtonAdicionar.setText("Add Transaction");
         jButtonAdicionar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonAdicionarActionPerformed(evt);
             }
         });
 
-        jButtonCriarBloco.setText("Criar Bloco (Not needed)");
+        jButtonCriarBloco.setText("Create Block (DEMO ONLY)");
         jButtonCriarBloco.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonCriarBlocoActionPerformed(evt);
@@ -314,13 +317,10 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(jScrollPane6)
                     .addComponent(jButtonListar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jSeparator2)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton2)
-                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButtonAdicionar, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButtonCriarBloco, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                    .addComponent(jButtonAdicionar, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
+                    .addComponent(jButtonCriarBloco, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
@@ -337,17 +337,17 @@ public class Main extends javax.swing.JFrame {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButtonListar)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButtonAdicionar)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButtonCriarBloco)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -359,13 +359,13 @@ public class Main extends javax.swing.JFrame {
                     .addContainerGap(269, Short.MAX_VALUE)))
         );
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Pesquisa por nome"));
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Search by name"));
         jPanel3.setToolTipText("");
         jPanel3.setName(""); // NOI18N
         jPanel3.setLayout(new javax.swing.BoxLayout(jPanel3, javax.swing.BoxLayout.LINE_AXIS));
         jPanel3.add(jTextFieldNomePesquisar);
 
-        jButtonPesquisarCurr.setText("Pesquisar");
+        jButtonPesquisarCurr.setText("Search");
         jButtonPesquisarCurr.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonPesquisarCurrActionPerformed(evt);
@@ -373,7 +373,7 @@ public class Main extends javax.swing.JFrame {
         });
         jPanel3.add(jButtonPesquisarCurr);
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Listagem"));
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("User Listing"));
 
         listUsers.setBorder(null);
         listUsers.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
@@ -413,6 +413,8 @@ public class Main extends javax.swing.JFrame {
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
+        jPanel2.getAccessibleContext().setAccessibleName("User List");
+
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -430,8 +432,8 @@ public class Main extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 561, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(107, Short.MAX_VALUE))
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(89, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Submitions", jPanel7);
@@ -842,7 +844,7 @@ public class Main extends javax.swing.JFrame {
                 @Override
                 public void run() {
                     try {
-                        new blockchain.utils.BlockchainExplorer(blockchain, node);
+                        new blockchain.utils.BlockchainExplorer(blockchain, node, false);
                     } catch (RemoteException ex) {
                         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                     }

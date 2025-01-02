@@ -10,8 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import p2p.IremoteP2P;
 
 public class BlockchainExplorer extends JFrame {
@@ -27,7 +25,7 @@ public class BlockchainExplorer extends JFrame {
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss - dd/MM/yyyy");
 
-    public BlockchainExplorer(BlockChain blockchain, IremoteP2P node) throws RemoteException {
+    public BlockchainExplorer(BlockChain blockchain, IremoteP2P node, boolean closeAppOnExit) throws RemoteException {
         this.blockchain = blockchain;
         setTitle("Blockchain Explorer");
         setLayout(new BorderLayout());
@@ -116,7 +114,12 @@ public class BlockchainExplorer extends JFrame {
         setLocationRelativeTo(null); // Center the window
 
         // Set the close operation to dispose the window, not exit the whole app
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        if (closeAppOnExit) {
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        }else{
+            setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        }
+        
 
         setVisible(true);
     }
