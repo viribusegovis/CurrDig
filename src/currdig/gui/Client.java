@@ -1,13 +1,10 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package currdig.gui;
 
 import blockchain.utils.BlockChain;
 import currdig.core.User;
 import currdig.utils.RMI;
 import currdig.utils.Utils;
+import java.awt.HeadlessException;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -19,8 +16,9 @@ import javax.swing.SwingUtilities;
 import p2p.IremoteP2P;
 
 /**
- *
- * @author vasco
+ * Creates a new form Client. Initializes the client, discovers available P2P
+ * nodes, and allows the user to connect to a node. If no nodes are available,
+ * the application exits.
  */
 public class Client extends javax.swing.JFrame {
 
@@ -31,14 +29,18 @@ public class Client extends javax.swing.JFrame {
      */
     public Client() {
         try {
-            initComponents();
+            initComponents(); // Initialize the GUI components
+
+            // Discover available P2P nodes
             List<String> availableServers = Utils.discoverServers();
+
+            // If no nodes are found, show a message and exit the program
             if (availableServers.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "No P2P nodes found. Please try again.");
                 System.exit(0);
             }
 
-            // Display available servers in a dialog
+            // Display the available servers for the user to select from
             String selectedServer = (String) JOptionPane.showInputDialog(this,
                     "Select a server to connect to:",
                     "Server Selection",
@@ -52,22 +54,24 @@ public class Client extends javax.swing.JFrame {
                 System.exit(0); // Exit the program
             }
 
-            // If a valid server is selected
+            // If a valid server is selected, connect to it
             if (!selectedServer.isEmpty()) {
                 node = (IremoteP2P) RMI.getRemote(selectedServer);
                 System.out.println("Connected to remote P2P node at " + selectedServer);
 
-                startNodeHealthCheck(); // Start health monitoring
+                // Start health monitoring for the node
+                startNodeHealthCheck(); // Start health monitoring in a separate thread
             }
-        } catch (Exception ex) {
+        } catch (HeadlessException | MalformedURLException | NotBoundException | RemoteException ex) {
             JOptionPane.showMessageDialog(this, "Unexpected error: " + ex.getMessage());
-            ex.printStackTrace();
-            System.exit(1);
+            System.exit(1); // Exit the program if there is an error
         }
     }
 
     /**
-     * Start a thread to check the node's health.
+     * Starts a thread to periodically check the health of the connected P2P
+     * node. If the node becomes unavailable, the user is notified and
+     * redirected to the Landing page.
      */
     private void startNodeHealthCheck() {
         new Thread(() -> {
@@ -85,13 +89,7 @@ public class Client extends javax.swing.JFrame {
 
                         // Redirect to Landing page
                         java.awt.EventQueue.invokeLater(() -> {
-                            try {
-                                new Landing().setVisible(true); // Show the Landing screen
-                            } catch (NotBoundException ex) {
-                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (MalformedURLException ex) {
-                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                            }
+                            new Client().setVisible(true); // Show the Landing screen
                             this.dispose(); // Close the current Main instance
                         });
 
@@ -101,8 +99,7 @@ public class Client extends javax.swing.JFrame {
                     // Sleep before the next health check
                     Thread.sleep(5000); // Check every 5 seconds
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (HeadlessException | InterruptedException e) {
             }
         }).start();
     }
@@ -192,6 +189,13 @@ public class Client extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * This method is called when the user attempts to login. It validates the
+     * credentials, authenticates with the node, and loads the user's data. It
+     * also loads the blockchain and opens the Blockchain Explorer UI.
+     *
+     * @param evt The event triggered by the login button.
+     */
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         // Retrieve the username and password from the text fields
         String username = txtUsername.getText();
@@ -225,12 +229,12 @@ public class Client extends javax.swing.JFrame {
         } catch (Exception ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         // If no exception was thrown, login is successful
         JOptionPane.showMessageDialog(this, "Login successful!");
 
         try {
-            // Assuming you have already fetched the blockchain from the node
+            // Assuming blockchain has alredy been fetched
             BlockChain blockchain = node.getBlockchain();  // node.getBlockchain() loads the blockchain
 
             // Open the Blockchain Explorer UI in a separate thread to avoid blocking
@@ -244,11 +248,10 @@ public class Client extends javax.swing.JFrame {
                     }
                 }
             });
-            
+
             this.dispose();
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (RemoteException e) {
             JOptionPane.showMessageDialog(null, "Failed to load blockchain", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnLoginActionPerformed

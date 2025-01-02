@@ -16,20 +16,25 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import javax.swing.JOptionPane;
 
+/**
+ * NodeP2PGui is a graphical user interface for interacting with the
+ * Peer-to-Peer (P2P) network. It allows the user to start a server, discover
+ * peers, connect to them, and handle mining activities.
+ */
 public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
 
     OremoteP2P myremoteObject;
-
     String address;
 
     /**
-     * Creates new form MessengerGUI
+     * Creates a new form NodeP2PGui. Initializes the components and disables
+     * the buttons initially.
      */
     public NodeP2PGui() {
         initComponents();
         btnConnect.setEnabled(false);
         btnFind.setEnabled(false);
-        btnManual.setEnabled(false);
+        btnManualCon.setEnabled(false);
     }
 
     /**
@@ -60,7 +65,7 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
         jScrollPane4 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<>();
         btnFind = new javax.swing.JButton();
-        btnManual = new javax.swing.JButton();
+        btnManualCon = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
@@ -146,10 +151,10 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
             }
         });
 
-        btnManual.setText("Manual Connection");
-        btnManual.addActionListener(new java.awt.event.ActionListener() {
+        btnManualCon.setText("Manual Connection");
+        btnManualCon.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnManualActionPerformed(evt);
+                btnManualConActionPerformed(evt);
             }
         });
 
@@ -166,7 +171,7 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
                         .addComponent(txtNodeAddress)
                         .addGap(18, 18, 18)
                         .addGroup(pnNetworkLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(btnManual, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnManualCon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(btnFind, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(pnNetworkLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
@@ -178,7 +183,7 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
             .addGroup(pnNetworkLayout.createSequentialGroup()
                 .addGap(9, 9, 9)
                 .addGroup(pnNetworkLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnManual)
+                    .addComponent(btnManualCon)
                     .addComponent(txtNodeAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnFind)
@@ -224,7 +229,13 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnManualActionPerformed
+    /**
+     * This method handles the manual connection to a node based on user input.
+     * It attempts to connect to a manually entered node address via RMI.
+     *
+     * @param evt The event triggered by the manual connection button.
+     */
+    private void btnManualConActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnManualConActionPerformed
         // Get the selected server from the JList
         String address = txtNodeAddress.getText();
 
@@ -235,8 +246,15 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
             onException(ex, "connect");
             Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }//GEN-LAST:event_btnManualActionPerformed
+    }//GEN-LAST:event_btnManualConActionPerformed
 
+    /**
+     * This method discovers available P2P nodes in the network by broadcasting
+     * discovery requests. It filters out the current node's address and updates
+     * the UI with the list of available servers.
+     *
+     * @param evt The event triggered by the find peers button.
+     */
     private void btnFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFindActionPerformed
         new Thread(() -> {
             try {
@@ -265,6 +283,12 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
         }).start();
     }//GEN-LAST:event_btnFindActionPerformed
 
+    /**
+     * This method connects to a selected P2P node from the discovered nodes
+     * list. It establishes an RMI connection with the selected peer node.
+     *
+     * @param evt The event triggered by the connect button.
+     */
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
         // Get the selected server from the JList
         String selectedServer = jList1.getSelectedValue();
@@ -288,6 +312,13 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtNodeAddressActionPerformed
 
+    /**
+     * This method starts the P2P server on the specified port. It binds the
+     * server to a registry and starts listening for incoming discovery
+     * requests.
+     *
+     * @param evt The event triggered by the start server button.
+     */
     private void btStartServerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btStartServerActionPerformed
         try {
             int port = Integer.parseInt(txtServerListeningPort.getText());
@@ -304,7 +335,7 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
 
             btnConnect.setEnabled(true);
             btnFind.setEnabled(true);
-            btnManual.setEnabled(true);
+            btnManualCon.setEnabled(true);
 
             new Thread(() -> {
                 int initialPort = 12345; // Start with port 12345
@@ -453,7 +484,7 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
     private javax.swing.JButton btStartServer;
     private javax.swing.JButton btnConnect;
     private javax.swing.JButton btnFind;
-    private javax.swing.JButton btnManual;
+    private javax.swing.JButton btnManualCon;
     private javax.swing.JLabel imgServerRunning;
     private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
@@ -489,34 +520,31 @@ public class NodeP2PGui extends javax.swing.JFrame implements P2Plistener {
 
     @Override
     public void onConnect(String address) {
-        try {
-            List<IremoteP2P> net = myremoteObject.getNetwork();
-            String txt = "";
-            for (IremoteP2P iremoteP2P : net) {
-                txt += iremoteP2P.getAddress() + "\n";
-            }
-            txtNetwork.setText(txt);
-        } catch (RemoteException ex) {
-            onException(ex, "On connect");
-            Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
+        // Update the network display when a new connection is made
+        updateNetwork();
     }
 
     @Override
     public void onDisconnect(String address) {
+        // Update the network display when a node disconnects
+        updateNetwork();
+    }
+
+    /**
+     * Updates the displayed list of connected network nodes.
+     */
+    private void updateNetwork() {
         try {
             List<IremoteP2P> net = myremoteObject.getNetwork();
-            String txt = "";
+            StringBuilder txt = new StringBuilder();
             for (IremoteP2P iremoteP2P : net) {
-                txt += iremoteP2P.getAddress() + "\n";
+                txt.append(iremoteP2P.getAddress()).append("\n");
             }
-            txtNetwork.setText(txt);
+            txtNetwork.setText(txt.toString());
         } catch (RemoteException ex) {
-            onException(ex, "On disconnect");
+            onException(ex, "On connect/disconnect");
             Logger.getLogger(NodeP2PGui.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 
     @Override

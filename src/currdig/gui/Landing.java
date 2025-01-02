@@ -3,6 +3,7 @@ package currdig.gui;
 import currdig.core.User;
 import currdig.utils.RMI;
 import currdig.utils.Utils;
+import java.awt.HeadlessException;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -12,12 +13,20 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import p2p.IremoteP2P;
 
+/**
+ * The Landing class serves as the entry point for the application. It allows
+ * users to select a P2P server, login, or register.
+ */
 public class Landing extends javax.swing.JFrame {
 
     private IremoteP2P node;
 
     /**
-     * Creates new form Landing
+     * Creates a new Landing form.
+     *
+     * @throws NotBoundException if the specified name is not currently bound in
+     * the RMI registry.
+     * @throws MalformedURLException if the server's URL is malformed.
      */
     public Landing() throws NotBoundException, MalformedURLException {
         try {
@@ -46,12 +55,11 @@ public class Landing extends javax.swing.JFrame {
             if (!selectedServer.isEmpty()) {
                 node = (IremoteP2P) RMI.getRemote(selectedServer);
                 System.out.println("Connected to remote P2P node at " + selectedServer);
-                
+
                 startNodeHealthCheck(); // Start health monitoring
             }
-        } catch (Exception ex) {
+        } catch (HeadlessException | MalformedURLException | NotBoundException | RemoteException ex) {
             JOptionPane.showMessageDialog(this, "Unexpected error: " + ex.getMessage());
-            ex.printStackTrace();
             System.exit(1);
         }
     }
@@ -247,7 +255,6 @@ public class Landing extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    
     /**
      * Start a thread to check the node's health.
      */
@@ -274,7 +281,7 @@ public class Landing extends javax.swing.JFrame {
                             } catch (MalformedURLException ex) {
                                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                             }
-                            this.dispose(); // Close the current Main instance
+                            this.dispose(); // Close the current instance
                         });
 
                         break; // Exit the health check loop
@@ -283,14 +290,17 @@ public class Landing extends javax.swing.JFrame {
                     // Sleep before the next health check
                     Thread.sleep(5000); // Check every 5 seconds
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (HeadlessException | InterruptedException e) {
             }
         }).start();
     }
-    
 
-
+    /**
+     * Handles the Login button click event. Authenticates the user and opens
+     * the Main window upon successful login.
+     *
+     * @param evt the ActionEvent triggered by the Login button.
+     */
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         try {
             // Retrieve the username and password from the text fields
@@ -328,6 +338,12 @@ public class Landing extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnLoginActionPerformed
 
+    /**
+     * Handles the Register button click event. Registers a new user on the
+     * selected P2P node.
+     *
+     * @param evt the ActionEvent triggered by the Register button.
+     */
     private void btnRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegisterActionPerformed
         try {
             String username = txtRegisterUsername.getText();
@@ -352,7 +368,7 @@ public class Landing extends javax.swing.JFrame {
             }
 
             JOptionPane.showMessageDialog(this, "User registered successfully.");
-        } catch (Exception ex) {
+        } catch (HeadlessException | RemoteException ex) {
             java.util.logging.Logger.getLogger(Landing.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(this, ex.getMessage());
         }

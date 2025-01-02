@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package currdig.gui;
 
 import blockchain.utils.Block;
@@ -11,17 +7,18 @@ import blockchain.utils.SecurityUtils;
 import currdig.core.Entry;
 import currdig.core.User;
 import currdig.utils.Utils;
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.security.Key;
-import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -31,14 +28,15 @@ import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import p2p.IremoteP2P;
 
 /**
- *
- * @author bmsff
+ * The Main class represents the primary user interface for the application. It
+ * provides features for interacting with the blockchain and managing users.
  */
 public class Main extends javax.swing.JFrame {
 
@@ -54,12 +52,13 @@ public class Main extends javax.swing.JFrame {
     public static String fileCurrDig = "currdig.obj";
 
     /**
-     * Creates new form Main
+     * Creates a new Main form.
      *
-     * @param pubKey
-     * @param privKey
-     * @param simKey
-     * @param username
+     * @param pubKey The user's public key.
+     * @param privKey The user's private key.
+     * @param simKey The symmetric encryption key.
+     * @param username The username of the logged-in user.
+     * @param node The remote P2P node the user is connected to.
      */
     public Main(PublicKey pubKey, PrivateKey privKey, Key simKey, String username, IremoteP2P node) {
         this.pubKey = pubKey;
@@ -75,13 +74,18 @@ public class Main extends javax.swing.JFrame {
         startMiningMonitor(); // Start the monitoring job
     }
 
+    /**
+     * Initializes custom components and listeners for the Main form.
+     */
     private void initMyComponents() {
         try {
+            // Load users from utility function
             users = Utils.loadUsers();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error loading users: " + ex.getMessage());
         }
 
+        // Display the public key in the text field
         if (this.pubKey != null) {
             String pub = Base64.getEncoder().encodeToString(this.pubKey.getEncoded());
             txtEntity.setText(pub);
@@ -89,9 +93,12 @@ public class Main extends javax.swing.JFrame {
             // Optionally set txtEntity to empty or a default message
             txtEntity.setText("");
         }
-        listUsers();
 
+        listUsers();// Populate the user list
+
+        // Add a selection listener to the user list
         listUsers.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            @Override
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 try {
                     listUsersValueChanged(evt);
@@ -109,7 +116,9 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
+        // Add a selection listener to the block list
         jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            @Override
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 if (!evt.getValueIsAdjusting()) {
                     displayBlockList();
@@ -119,6 +128,7 @@ public class Main extends javax.swing.JFrame {
 
         // Add a listener for tab changes
         jTabbedPane1.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (jTabbedPane1.getSelectedIndex() == 1) {
                     try {
@@ -144,21 +154,40 @@ public class Main extends javax.swing.JFrame {
                         // Perform a lightweight RMI call to check if the node is responsive
                         node.getAddress(); // If this call fails, the node is unresponsive
                     } catch (RemoteException e) {
-                        // Notify the user and close the application
-                        JOptionPane.showMessageDialog(this, "Node is unavailable. Closing application.");
-                        System.out.println("Node is unresponsive. Application will exit.");
-                        System.exit(1); // Exit the application
+                        // Notify the user
+                        JOptionPane.showMessageDialog(this,
+                                "Node is unavailable. Trying to find new server.",
+                                "Node Unavailable",
+                                JOptionPane.WARNING_MESSAGE);
+
+                        // Redirect to Landing page
+                        java.awt.EventQueue.invokeLater(() -> {
+                            try {
+                                new Landing().setVisible(true); // Show the Landing screen
+                            } catch (NotBoundException | MalformedURLException ex) {
+                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            this.dispose(); // Close the current instance
+                        });
+
+                        break; // Exit the health check loop
                     }
 
                     // Sleep before the next health check
                     Thread.sleep(5000); // Check every 5 seconds
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (HeadlessException | InterruptedException e) {
             }
         }).start();
     }
 
+    /**
+     * Hashes a string using SHA-256 and encodes the result in Base64.
+     *
+     * @param keyString The string to hash.
+     * @return The Base64-encoded hash of the input string, or null if an error
+     * occurs.
+     */
     private String hashKey(String keyString) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -191,15 +220,15 @@ public class Main extends javax.swing.JFrame {
         jScrollPane6 = new javax.swing.JScrollPane();
         txtUser = new javax.swing.JTextArea();
         jSeparator2 = new javax.swing.JSeparator();
-        jButtonListar = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButtonAdicionar = new javax.swing.JButton();
-        jButtonCriarBloco = new javax.swing.JButton();
+        btnRefreshUserList = new javax.swing.JButton();
+        btnBC = new javax.swing.JButton();
+        btnActiveTrans = new javax.swing.JButton();
+        btnAddTrans = new javax.swing.JButton();
+        btnCreateBlock = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jTextFieldNomePesquisar = new javax.swing.JTextField();
-        jButtonPesquisarCurr = new javax.swing.JButton();
+        btnSearchUser = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         listUsers = new javax.swing.JList<>();
@@ -226,7 +255,7 @@ public class Main extends javax.swing.JFrame {
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         txtProof = new javax.swing.JTextField();
-        jButton5 = new javax.swing.JButton();
+        btnRefreshBC = new javax.swing.JButton();
         jScrollPane7 = new javax.swing.JScrollPane();
         jList2 = new javax.swing.JList<>();
 
@@ -248,7 +277,6 @@ public class Main extends javax.swing.JFrame {
         jTextAreaDescricao.setBorder(javax.swing.BorderFactory.createTitledBorder("Description"));
         jTextAreaDescricao.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         jScrollPane2.setViewportView(jTextAreaDescricao);
-        jTextAreaDescricao.getAccessibleContext().setAccessibleName("Description");
 
         txtEntity.setEditable(false);
         txtEntity.setBackground(new java.awt.Color(255, 255, 255));
@@ -258,7 +286,6 @@ public class Main extends javax.swing.JFrame {
         txtEntity.setBorder(javax.swing.BorderFactory.createTitledBorder("Entity"));
         txtEntity.setFocusable(false);
         jScrollPane3.setViewportView(txtEntity);
-        txtEntity.getAccessibleContext().setAccessibleName("Entity");
 
         txtUser.setEditable(false);
         txtUser.setBackground(new java.awt.Color(255, 255, 255));
@@ -269,38 +296,38 @@ public class Main extends javax.swing.JFrame {
         txtUser.setFocusable(false);
         jScrollPane6.setViewportView(txtUser);
 
-        jButtonListar.setText("Refresh List");
-        jButtonListar.addActionListener(new java.awt.event.ActionListener() {
+        btnRefreshUserList.setText("Refresh List");
+        btnRefreshUserList.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonListarActionPerformed(evt);
+                btnRefreshUserListActionPerformed(evt);
             }
         });
 
-        jButton1.setText("Blockchain Explorer");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnBC.setText("Blockchain Explorer");
+        btnBC.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnBCActionPerformed(evt);
             }
         });
 
-        jButton2.setText("Active Transactions");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        btnActiveTrans.setText("Active Transactions");
+        btnActiveTrans.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                btnActiveTransActionPerformed(evt);
             }
         });
 
-        jButtonAdicionar.setText("Add Transaction");
-        jButtonAdicionar.addActionListener(new java.awt.event.ActionListener() {
+        btnAddTrans.setText("Add Transaction");
+        btnAddTrans.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonAdicionarActionPerformed(evt);
+                btnAddTransActionPerformed(evt);
             }
         });
 
-        jButtonCriarBloco.setText("Create Block (DEMO ONLY)");
-        jButtonCriarBloco.addActionListener(new java.awt.event.ActionListener() {
+        btnCreateBlock.setText("Create Block (DEMO ONLY)");
+        btnCreateBlock.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonCriarBlocoActionPerformed(evt);
+                btnCreateBlockActionPerformed(evt);
             }
         });
 
@@ -315,12 +342,12 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(jScrollPane2)
                     .addComponent(jScrollPane3)
                     .addComponent(jScrollPane6)
-                    .addComponent(jButtonListar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnRefreshUserList, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jSeparator2)
-                    .addComponent(jButtonAdicionar, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
-                    .addComponent(jButtonCriarBloco, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnAddTrans, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
+                    .addComponent(btnCreateBlock, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnBC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnActiveTrans, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
@@ -338,15 +365,15 @@ public class Main extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton2)
+                .addComponent(btnActiveTrans)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton1)
+                .addComponent(btnBC)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButtonListar)
+                .addComponent(btnRefreshUserList)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButtonAdicionar)
+                .addComponent(btnAddTrans)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButtonCriarBloco)
+                .addComponent(btnCreateBlock)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -365,13 +392,13 @@ public class Main extends javax.swing.JFrame {
         jPanel3.setLayout(new javax.swing.BoxLayout(jPanel3, javax.swing.BoxLayout.LINE_AXIS));
         jPanel3.add(jTextFieldNomePesquisar);
 
-        jButtonPesquisarCurr.setText("Search");
-        jButtonPesquisarCurr.addActionListener(new java.awt.event.ActionListener() {
+        btnSearchUser.setText("Search");
+        btnSearchUser.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonPesquisarCurrActionPerformed(evt);
+                btnSearchUserActionPerformed(evt);
             }
         });
-        jPanel3.add(jButtonPesquisarCurr);
+        jPanel3.add(btnSearchUser);
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("User Listing"));
 
@@ -557,10 +584,10 @@ public class Main extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jButton5.setText("jButton5");
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
+        btnRefreshBC.setText("Refresh");
+        btnRefreshBC.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
+                btnRefreshBCActionPerformed(evt);
             }
         });
 
@@ -584,7 +611,7 @@ public class Main extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton5)))
+                        .addComponent(btnRefreshBC)))
                 .addContainerGap())
         );
         jPanel8Layout.setVerticalGroup(
@@ -594,7 +621,7 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
                     .addGroup(jPanel8Layout.createSequentialGroup()
                         .addGap(122, 122, 122)
-                        .addComponent(jButton5))
+                        .addComponent(btnRefreshBC))
                     .addComponent(jScrollPane7))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -609,44 +636,69 @@ public class Main extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Fetches and displays the list of users available on the node, excluding
+     * the current user. This method uses a SwingWorker to perform the
+     * background operation and updates the GUI on the Event Dispatch Thread.
+     */
     private void listUsers() {
-        try {
-            // Load users from Utils
-            users = node.listUsers();
+        // Use SwingWorker to load the users in a background thread
+        SwingWorker<List<User>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected List<User> doInBackground() throws Exception {
+                // Fetch the list of users from the node (background thread)
+                return node.listUsers();
+            }
 
-            // Create a DefaultListModel<String> to hold the usernames
-            DefaultListModel<String> listModel = new DefaultListModel<>();
+            @Override
+            protected void done() {
+                try {
+                    // Retrieve the list of users (this runs on the EDT)
+                    List<User> fetchedUsers = get();
 
-            for (User user : users) {
-                if (user.getName().equals(this.username)) {
-                    users.remove(user);
-                    break; // Stop searching once a match is found
+                    // Filter out the current user
+                    fetchedUsers.removeIf(user -> user.getName().equals(username));
+
+                    // Create a DefaultListModel<String> to hold the usernames
+                    DefaultListModel<String> listModel = new DefaultListModel<>();
+
+                    // Populate the listModel with usernames
+                    for (User user : fetchedUsers) {
+                        listModel.addElement(user.getName());
+                    }
+
+                    // Set the listModel to the listUsers JList
+                    listUsers.setModel(listModel);
+
+                    // Set selection mode to single selection
+                    listUsers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+                } catch (Exception ex) {
+                    // Log any exceptions and show an error message
+                    java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+                    JOptionPane.showMessageDialog(null, "Failed to load user list", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
+        };
 
-            // Loop through the users and add the usernames to the listModel
-            for (User user : users) {
-                listModel.addElement(user.getName());
-            }
-
-            // Set the listModel to the listUsers JList
-            listUsers.setModel(listModel);
-
-            // Set selection mode to single selection
-            listUsers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
+        // Execute the SwingWorker
+        worker.execute();
     }
 
+    /**
+     * Handles the selection event when a user is selected from the list.
+     * Displays the selected user's public key in the associated text area.
+     *
+     * @param evt ListSelectionEvent triggered when a selection occurs in the
+     * listUsers JList.
+     * @throws Exception if any decoding or selection error occurs.
+     */
     private void listUsersValueChanged(javax.swing.event.ListSelectionEvent evt) throws Exception {
         if (!evt.getValueIsAdjusting()) { // Ensure the event is the final selection
             int selectedIndex = listUsers.getSelectedIndex();
 
             if (selectedIndex != -1) {
                 // Get the selected user
-
                 User selectedUser = users.get(selectedIndex);
 
                 // Get the public key of the selected user
@@ -661,16 +713,12 @@ public class Main extends javax.swing.JFrame {
         }
     }
 
-    // Helper method to decode public key from Base64 string
-    private PublicKey decodePublicKey(String encodedKey) throws Exception {
-        byte[] publicBytes = Base64.getDecoder().decode(encodedKey);
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        return keyFactory.generatePublic(keySpec);
-    }
-
     private List<Block> allBlocks;  // Store blocks globally to avoid issues
 
+    /**
+     * Retrieves and displays the list of blocks from the blockchain. Adds
+     * listeners for block selection and initializes the transaction list.
+     */
     private void displayBlockList() {
         try {
             // Get all blocks from the blockchain
@@ -712,86 +760,124 @@ public class Main extends javax.swing.JFrame {
         }
     }
 
+    /**
+     * Displays the details of the selected block in the associated text fields.
+     *
+     * @param selectedBlock The block selected by the user.
+     */
     private void displayBlockDetails(Block selectedBlock) {
-        // Display Block Hash in the TextBox
-        txtBlockHash.setText(selectedBlock.getCurrentHash()); // Make sure this updates the Block Hash field
+        // Display the hash of the selected block in the text field
+        txtBlockHash.setText(selectedBlock.getCurrentHash());
 
-        // Clear any previous transaction details
+        // Clear any previous transaction details to reset the UI for the selected block
         clearTransactionDetails();
     }
 
+    /**
+     * Displays the list of transactions contained in the selected block.
+     * Populates the transaction list UI component and adds a listener for
+     * transaction selection.
+     *
+     * @param selectedBlock The block whose transactions need to be displayed.
+     */
     private void displayTransactionsForBlock(Block selectedBlock) {
-        List<Entry> selectedTransactions = selectedBlock.getBuffer();  // Get transactions from the selected block
+        // Retrieve the transactions (entries) from the buffer of the selected block
+        List<Entry> selectedTransactions = selectedBlock.getBuffer();
 
-        // Create a DefaultListModel for jList2 (the transaction list)
+        // Create a DefaultListModel to hold transaction descriptions for the list
         DefaultListModel<String> transactionListModel = new DefaultListModel<>();
+
+        // Populate the model with transaction descriptions and truncated public key
         for (Entry entry : selectedTransactions) {
             transactionListModel.addElement("Transaction: " + entry.getDescription() + " - "
                     + Base64.getEncoder().encodeToString(entry.getTargetUserPublicKey().getEncoded()).substring(0, 10) + "...");
         }
 
-        // Set the model for jList2
+        // Set the model for jList2 (the transaction list UI component)
         jList2.setModel(transactionListModel);
 
-        // Add a listener to handle transaction selection from jList2
+        // Add a listener to handle transaction selection
         jList2.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
+            if (!e.getValueIsAdjusting()) { // Ensure the event is the final selection
                 int selectedTransactionIndex = jList2.getSelectedIndex();
                 if (selectedTransactionIndex != -1) {
+                    // Fetch and display details for the selected transaction
                     Entry selectedEntry = selectedTransactions.get(selectedTransactionIndex);
-                    displayTransactionDetailsForEntry(selectedEntry, selectedBlock); // Show transaction details
+                    displayTransactionDetailsForEntry(selectedEntry, selectedBlock);
                 }
             }
         });
     }
 
+    /**
+     * Resets the transaction list and clears any previously displayed
+     * transaction details. Ensures a clean state when switching between blocks
+     * or transactions.
+     */
     private void resetTransactionList() {
-        // Reset jList2 to remove any previous selections
-        jList2.clearSelection();  // Deselect any previously selected item in jList2
-        clearTransactionDetails(); // Clear any transaction details in the text fields
+        // Clear selection in the transaction list UI component
+        jList2.clearSelection();
+
+        // Clear any transaction details displayed in the UI
+        clearTransactionDetails();
     }
 
+    /**
+     * Displays the details of the selected transaction entry. This method
+     * updates various text fields with the details of the selected entry from
+     * the block.
+     *
+     * @param selectedEntry The transaction entry whose details need to be
+     * displayed.
+     * @param selectedBlock The block containing the selected transaction.
+     */
     private void displayTransactionDetailsForEntry(Entry selectedEntry, Block selectedBlock) {
-        // Display transaction details in text fields
-
-        // Update User's Public Key field (Target User's Public Key)
+        // Display the Target User's Public Key in the corresponding text field
         jTextField1.setText(Base64.getEncoder().encodeToString(selectedEntry.getTargetUserPublicKey().getEncoded()));
 
-        // Update Entity's Public Key field (Entity Public Key)
+        // Display the Entity's Public Key in the corresponding text field
         txtEntityPublicKey.setText(Base64.getEncoder().encodeToString(selectedEntry.getEntityPublicKey().getEncoded()));
 
-        // Update Timestamp field (Assume timestamp is available in Entry)
+        // Display the timestamp of the transaction
         txtTimestamp.setText(selectedEntry.getDateTime().toString());
 
-        // Update Description field (Assume description is available in Entry)
+        // Display the transaction description
         txtareaDescription.setText(selectedEntry.getDescription());
 
-        // Update Transaction Hash (hash of the entry)
+        // Display the transaction hash (calculated hash of the entry's string representation)
         txtTransactionHash.setText(Hash.getHash(selectedEntry.toString()));
 
-        // Optionally, add details for Merkle Tree and Proof
+        // Optionally, display the nonce associated with the block
         txtNonce.setText(String.valueOf(selectedBlock.getNonce()));
 
-        // Check if Merkle Tree is available for the selected block
+        // Check if a Merkle Tree exists for the selected block
         if (selectedBlock.getMerkleTree() != null) {
+            // Get the proof for the selected entry from the Merkle Tree
             List<String> proof = selectedBlock.getMerkleTree().getProof(selectedEntry);
 
-            // Format proof for display
+            // Format the proof as a string and display it in the proof text field
             StringBuilder proofText = new StringBuilder();
             for (String hash : proof) {
                 proofText.append(hash).append("\n");
             }
 
+            // Display the Merkle proof and root in the corresponding text fields
             txtProof.setText(proofText.toString());
             txtMerkleRoot.setText(selectedBlock.getMerkleTree().getRoot());
         } else {
+            // If Merkle Tree is not available, indicate that the block is not finalized
             txtMerkleRoot.setText("Block not finalized");
             txtProof.setText("Block not finalized");
         }
     }
 
-// Helper method to clear transaction details in text fields
+    /**
+     * Clears all the transaction details displayed in the text fields. This
+     * method is used to reset the UI when changing the transaction or block
+     * selection.
+     */
     private void clearTransactionDetails() {
+        // Clear all the text fields related to transaction details
         jTextField1.setText("");
         txtEntityPublicKey.setText("");
         txtTimestamp.setText("");
@@ -802,212 +888,382 @@ public class Main extends javax.swing.JFrame {
         txtMerkleRoot.setText("");
     }
 
-
-    private void jButtonPesquisarCurrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonPesquisarCurrActionPerformed
+    /**
+     * Action listener method for the search button. This method is triggered
+     * when the user clicks the "Pesquisar" button and initiates a search
+     * operation.
+     *
+     * @param evt The action event triggered by clicking the search button.
+     */
+    private void btnSearchUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSearchUserActionPerformed
         performSearch();
-    }//GEN-LAST:event_jButtonPesquisarCurrActionPerformed
+    }//GEN-LAST:event_btnSearchUserActionPerformed
 
+    /**
+     * A flag that indicates whether the mining process is currently running.
+     * This variable is accessed and modified in a thread-safe manner using the
+     * 'volatile' keyword.
+     */
     private volatile boolean isMining = false;
 
+    /**
+     * Starts a timer that monitors the mining process every second. If mining
+     * is not in progress, it enables the "Create Block" button. The monitoring
+     * check is performed on the Event Dispatch Thread (EDT).
+     */
     private void startMiningMonitor() {
+        // Create a Timer that runs every second
         Timer miningMonitor = new Timer(1000, e -> {
             // Run this check every second
             SwingUtilities.invokeLater(() -> {
+                // If mining is not in progress, enable the button to create a new block
                 if (!isMining) {
-                    jButtonCriarBloco.setEnabled(true);
+                    btnCreateBlock.setEnabled(true);
                 }
             });
         });
-        miningMonitor.start(); // Start the timer
+
+        miningMonitor.start(); // Start the timer that periodically checks the mining status
     }
 
+    /**
+     * Action handler for the button that fetches the transactions. This method
+     * creates a SwingWorker to fetch transactions in a background thread and
+     * displays them in a dialog upon completion.
+     *
+     * @param evt The action event triggered by clicking the button.
+     */
+    private void btnActiveTransActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActiveTransActionPerformed
+        // Create a SwingWorker to handle the transaction retrieval in a background thread
+        SwingWorker<CopyOnWriteArraySet, Void> worker = new SwingWorker<>() {
+            @Override
+            protected CopyOnWriteArraySet doInBackground() throws RemoteException {
+                // Fetch transactions from the node (this runs in a background thread)
+                return node.getTransactions();
+            }
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        try {
-            JOptionPane.showMessageDialog(null, node.getTransactions(), "Notification", JOptionPane.INFORMATION_MESSAGE);
-        } catch (RemoteException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }//GEN-LAST:event_jButton2ActionPerformed
+            @Override
+            protected void done() {
+                try {
+                    // Get the retrieved transactions (this happens on the EDT)
+                    CopyOnWriteArraySet transactions = get();
 
-    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        displayBlockList();
-    }//GEN-LAST:event_jButton5ActionPerformed
+                    // Display the transactions in a JOptionPane
+                    JOptionPane.showMessageDialog(null, transactions, "Notification", JOptionPane.INFORMATION_MESSAGE);
+                } catch (Exception ex) {
+                    // Log the exception if there is an issue with retrieving the transactions
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        try {
-            // Assuming you have already fetched the blockchain from the node
-            BlockChain blockchain = node.getBlockchain();  // node.getBlockchain() loads the blockchain
-
-            // Open the Blockchain Explorer UI in a separate thread to avoid blocking
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        new blockchain.utils.BlockchainExplorer(blockchain, node, false);
-                    } catch (RemoteException ex) {
-                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    // Handle potential exceptions (e.g., RemoteException)
+                    JOptionPane.showMessageDialog(null, "Failed to fetch transactions", "Error", JOptionPane.ERROR_MESSAGE);
                 }
-            });
+            }
+        };
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Failed to load blockchain", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_jButton1ActionPerformed
+        // Execute the SwingWorker to fetch transactions
+        worker.execute();
+    }//GEN-LAST:event_btnActiveTransActionPerformed
 
-    private void jButtonListarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonListarActionPerformed
+    /**
+     * Action handler for the button that displays the list of blocks. This
+     * method is triggered when the user clicks the "Display Block List" button.
+     *
+     * @param evt The action event triggered by clicking the button.
+     */
+    private void btnRefreshBCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshBCActionPerformed
+        displayBlockList();
+    }//GEN-LAST:event_btnRefreshBCActionPerformed
+
+    /**
+     * Action handler for the button that retrieves and displays the blockchain.
+     * This method creates a SwingWorker to fetch the blockchain in a background
+     * thread, and once the blockchain is retrieved, it opens the Blockchain
+     * Explorer UI in a separate thread.
+     *
+     * @param evt The action event triggered by clicking the button.
+     */
+    private void btnBCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBCActionPerformed
+        // Create a SwingWorker to handle the blockchain retrieval in a background thread
+        SwingWorker<BlockChain, Void> worker = new SwingWorker<>() {
+            @Override
+            protected BlockChain doInBackground() throws Exception {
+                // Retrieve the blockchain from the node (this runs in a background thread)
+                return node.getBlockchain();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    // Get the retrieved blockchain (this happens on the EDT)
+                    BlockChain blockchain = node.getBlockchain();
+
+                    // Open the Blockchain Explorer UI in a separate thread to avoid blocking the EDT
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            // Open BlockchainExplorer with the retrieved blockchain
+                            new blockchain.utils.BlockchainExplorer(blockchain, node, false);
+                        } catch (RemoteException ex) {
+                            // Log the error if RemoteException occurs while opening the explorer
+                            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    });
+                } catch (RemoteException e) {
+                    // Handle any errors that occur during blockchain retrieval
+                    // Show an error dialog if blockchain loading fails
+                    JOptionPane.showMessageDialog(null, "Failed to load blockchain", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+
+        // Execute the SwingWorker to fetch the blockchain
+        worker.execute();
+    }//GEN-LAST:event_btnBCActionPerformed
+
+    /**
+     * Action handler for the button that lists all users. This method is
+     * triggered when the user clicks the "List Users" button.
+     *
+     * @param evt The action event triggered by clicking the button.
+     */
+    private void btnRefreshUserListActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshUserListActionPerformed
         listUsers();
-    }//GEN-LAST:event_jButtonListarActionPerformed
+    }//GEN-LAST:event_btnRefreshUserListActionPerformed
 
-    private void jButtonCriarBlocoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCriarBlocoActionPerformed
-        // Disable the button to prevent multiple clicks
-        jButtonCriarBloco.setEnabled(false);
+    /**
+     * Action handler for the "Create Block" button. This method is triggered
+     * when the user clicks the "Create Block" button to start the mining
+     * process. It disables the button to prevent multiple clicks and starts a
+     * new thread to handle block creation and mining.
+     *
+     * @param evt The action event triggered by clicking the button.
+     */
+    private void btnCreateBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCreateBlockActionPerformed
+        // Disable the button to prevent multiple clicks during mining
+        btnCreateBlock.setEnabled(false);
         isMining = true; // Mark mining as in progress
 
+        // Start a new thread to handle block creation and mining
         new Thread(() -> {
             try {
-                // Make a block
+                // Retrieve the list of transactions from the node
                 CopyOnWriteArraySet<Entry> blockTransactions = node.getTransactions();
+
+                // If there are no transactions, exit early
                 if (blockTransactions.isEmpty()) {
                     return;
                 }
+
+                // Create a new block with the transactions and the last block's hash
                 Block b = new Block(node.getBlockchainLastHash(), blockTransactions);
 
-                // Remove the transactions
+                // Remove the transactions from the node as they're now included in the block
                 node.removeTransactions(blockTransactions);
 
-                // Start mining the block
-                int zeros = 4;
-                int nonce = node.mine(b.getMinerData(), zeros); // Blocks until mining completes
+                // Start the mining process to find a valid nonce for the block
+                int zeros = 4; // Define the number of leading zeros required for the proof of work
+                int nonce = node.mine(b.getMinerData(), zeros); // Start mining until the correct nonce is found
 
+                // Log the found nonce
                 System.out.println("Nonce found: " + nonce);
-                isMining = false;
+                isMining = false; // Mark mining as completed
 
-                // Update the nonce and add the block
+                // Set the nonce in the block and add it to the blockchain
                 b.setNonce(nonce, zeros);
                 node.addBlock(b);
             } catch (IOException e) {
+                // Handle errors related to saving the blockchain
                 System.err.println("Failed to save blockchain: " + e.getMessage());
             } catch (Exception ex) {
+                // Log any other exceptions that occur
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
+                // Ensure that the mining state is reset even if an exception occurred
                 isMining = false; // Mark mining as complete
+                // Re-enable the button once mining is done or failed
+                SwingUtilities.invokeLater(() -> btnCreateBlock.setEnabled(true));
             }
-        }).start();
-    }//GEN-LAST:event_jButtonCriarBlocoActionPerformed
+        }).start(); // Start the mining process in a new thread
+    }//GEN-LAST:event_btnCreateBlockActionPerformed
 
-    private void jButtonAdicionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAdicionarActionPerformed
-        jButtonAdicionar.setEnabled(false);
+    /**
+     * Action handler for the "Add Entry" button. This method is triggered when
+     * the user clicks the "Add Entry" button. It disables the button, retrieves
+     * input data, creates a transaction entry, signs it, and adds it to the
+     * blockchain. The button is re-enabled after the operation is completed.
+     *
+     * @param evt The action event triggered by clicking the button.
+     */
+    private void btnAddTransActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddTransActionPerformed
+        // Disable the button to prevent multiple clicks during transaction processing
+        btnAddTrans.setEnabled(false);
 
+        // Start a new thread to handle adding the entry in the background
         new Thread(() -> {
             try {
-                // Get the description from the text area
+                // Get the description from the text area (transaction description)
                 String description = jTextAreaDescricao.getText();
 
-                // Get the target user's public key from the txtUser text area
+                // Retrieve the target user's public key from the text area (Base64 encoded)
                 String targetUserPubKeyString = txtUser.getText();
                 PublicKey targetUserPubKey = SecurityUtils.getPublicKey(Base64.getDecoder().decode(targetUserPubKeyString));
 
-                // Create the Entry with the target user's public key
-                Entry newEntry = new Entry(description, this.pubKey, targetUserPubKey); // Updated constructor
+                // Create a new Entry with the description, current user's public key, and the target user's public key
+                Entry newEntry = new Entry(description, this.pubKey, targetUserPubKey); // Updated constructor for Entry
 
-                // Sign the Entry
+                // Sign the Entry using the current user's private key
                 byte[] signature = SecurityUtils.sign(newEntry.toString().getBytes(), this.privKey);
 
-                // Add the Entry to the Curriculum (blockchain)
-                //curriculum.addEntry(targetUserPubKey, newEntry, signature);
+                // Add the Entry to the blockchain (or curriculum system)
                 if (!node.addTransaction(targetUserPubKey, newEntry, signature)) {
-                    throw new Exception();
+                    throw new Exception("Failed to add transaction");
                 }
 
-                // Clear the input fields
+                // Clear the input fields after successful transaction
                 jTextAreaDescricao.setText("");
                 txtUser.setText("");
-                //curriculum.save(fileCurrDig);
+
+                // Update the history list of transactions or entries
                 updateHistoryList();
+
+                // Show a success message
                 JOptionPane.showMessageDialog(this, "Entry added successfully!");
 
+                // Re-enable the button in the Event Dispatch Thread
                 SwingUtilities.invokeLater(() -> {
-                    //enable button
-                    jButtonAdicionar.setEnabled(true);
+                    btnAddTrans.setEnabled(true);
                 });
 
             } catch (Exception ex) {
+                // Handle exceptions (e.g., errors in signing, adding transactions)
                 JOptionPane.showMessageDialog(this, "Error adding entry: " + ex.getMessage());
-                jButtonAdicionar.setEnabled(true);
-            } finally {
-                jButtonAdicionar.setEnabled(true);
-            }
-        }).start();
-    }//GEN-LAST:event_jButtonAdicionarActionPerformed
 
+                // Ensure the button is re-enabled if an error occurs
+                btnAddTrans.setEnabled(true);
+            } finally {
+                // Ensure the button is enabled in case of any error or successful completion
+                btnAddTrans.setEnabled(true);
+            }
+        }).start(); // Start the operation in a new thread to avoid blocking the UI
+    }//GEN-LAST:event_btnAddTransActionPerformed
+
+    /**
+     * Updates the list of entries associated with the current entity. This
+     * method retrieves the user's entries from the blockchain, formats them,
+     * and displays them in a list. Each entry shows the description, issuer,
+     * recipient, and timestamp information.
+     *
+     * @throws Exception If there is an error while fetching or processing the
+     * entries.
+     */
     private void updateHistoryList() throws Exception {
+        // Fetch the entries associated with the current entity (user) from the blockchain
         List<Entry> userEntries = node.getEntriesForEntity(this.pubKey); // Entries issued by this entity
 
+        // Create a DefaultListModel to hold the formatted strings for the list
         DefaultListModel<String> listModel = new DefaultListModel<>();
+
+        // Iterate through each entry and format the details for display
         for (Entry entry : userEntries) {
+            // Get the usernames of the target and entity based on their public keys
             String targetUserName = getUsernameByPublicKey(entry.getTargetUserPublicKey());
             String entityUserName = getUsernameByPublicKey(entry.getEntityPublicKey());
+
+            // Format the entry details into a readable string
             String formattedString = String.format("%s - Issued By: %s - Issued To: %s - Date: %s",
                     entry.getDescription(),
                     entityUserName,
                     targetUserName,
                     entry.getDateTime().toString());
+
+            // Add the formatted string to the list model
             listModel.addElement(formattedString);
         }
+
+        // Set the list model to the UI component (JList) to display the entries
         jList1.setModel(listModel);
     }
 
+    /**
+     * Retrieves the username associated with a given public key. This method
+     * checks the public key against the known users and returns their username.
+     * If the public key is not found in the list of users, it returns a portion
+     * of the key itself.
+     *
+     * @param publicKey The public key whose associated username is to be
+     * fetched.
+     * @return The username associated with the provided public key.
+     * @throws Exception If there is an error while retrieving the username.
+     */
     private String getUsernameByPublicKey(PublicKey publicKey) throws Exception {
+        // If the public key matches the current user's public key, return the username
         if (this.pubKey.equals(publicKey)) {
             return username;
         }
+
+        // Search through the list of users to find a match for the public key
         for (User user : users) {
             if (user.getPub().equals(publicKey)) {
                 return user.getName();
             }
         }
-        // If the user is not found, return a part of the public key
+
+        // If the public key is not found in the list, return a substring of the public key as a fallback
         return Base64.getEncoder().encodeToString(publicKey.getEncoded()).substring(0, 10) + "...";
     }
 
+    /**
+     * Performs a search for users based on the input name and updates the UI
+     * with the results. It filters users by name, excluding the current user's
+     * name, and displays the matching users in a list. If no matches are found,
+     * a message is displayed to the user.
+     *
+     * @throws Exception If any errors occur while performing the search or
+     * updating the UI.
+     */
     private void performSearch() {
         try {
+            // Get the search term from the text field
             String nome = jTextFieldNomePesquisar.getText();
 
+            // Check if the search term is not empty
             if (!nome.isEmpty()) {
-                // Load users
+                // Load the list of users from the data source
                 listUsers();
 
-                // Filter users matching the search
+                // Create a new DefaultListModel to hold the filtered user names
                 DefaultListModel<String> filteredModel = new DefaultListModel<>();
+
+                // Iterate through the users and add those that match the search term
                 for (User user : users) {
+                    // Check if the user's name contains the search term (case insensitive)
                     if (user.getName().toLowerCase().contains(nome.toLowerCase())) {
+                        // Exclude the current user from the search results
                         if (!this.username.equals(user.getName())) {
-                            filteredModel.addElement(user.getName());
+                            filteredModel.addElement(user.getName()); // Add matching user to the list
                         }
                     }
                 }
 
-                // Set the filtered model to the listUsers JList
+                // Set the filtered list model to the JList
                 listUsers.setModel(filteredModel);
 
-                // Set selection mode to single selection
+                // Set the selection mode to single selection (only one user can be selected)
                 listUsers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-                // Select the first item if there are matches
+                // If there are matches, select the first item in the list
                 if (!filteredModel.isEmpty()) {
                     listUsers.setSelectedIndex(0);
                 } else {
+                    // If no matches are found, show a message
                     JOptionPane.showMessageDialog(this, "No matching users found.");
                 }
 
             } else {
+                // If the search term is empty, load the full list of users
                 listUsers();
             }
-        } catch (Exception ex) {
+        } catch (HeadlessException ex) {
+            // Handle any errors that may occur during the search or UI update
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
     }
@@ -1048,13 +1304,13 @@ public class Main extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButtonAdicionar;
-    private javax.swing.JButton jButtonCriarBloco;
-    private javax.swing.JButton jButtonListar;
-    private javax.swing.JButton jButtonPesquisarCurr;
+    private javax.swing.JButton btnActiveTrans;
+    private javax.swing.JButton btnAddTrans;
+    private javax.swing.JButton btnBC;
+    private javax.swing.JButton btnCreateBlock;
+    private javax.swing.JButton btnRefreshBC;
+    private javax.swing.JButton btnRefreshUserList;
+    private javax.swing.JButton btnSearchUser;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;

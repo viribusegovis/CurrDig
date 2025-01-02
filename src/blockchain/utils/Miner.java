@@ -30,118 +30,119 @@ import java.util.concurrent.atomic.AtomicInteger;
 import p2p.P2Plistener;
 
 /**
- * Created on 02/11/2021, 18:28:06 Updated on 07/12/2021
- *
- * @author IPT - computer
+ * This class implements a Miner that works to find a valid nonce for a given
+ * message. It runs multiple threads to perform the mining process in parallel.
  */
 public class Miner {
 
-    //atributos 
-    P2Plistener listener;            // Listener dos mineiros
-    private MinerThread[] threads;      // Threads de calculo de hashs
-    private String message;             //  Mensagem a ser minada 
-    private AtomicInteger globalNonce;  // Nonce que valida a mensagem
+    private P2Plistener listener;            // Listener for mining events
+    private MinerThread[] threads;           // Array of miner threads
+    private String message;                  // Message to be mined
+    private AtomicInteger globalNonce;       // Shared nonce across threads
 
+    /**
+     * Constructor to initialize the Miner with a listener for mining events.
+     *
+     * @param listener The listener that will receive mining updates.
+     */
     public Miner(P2Plistener listener) {
         this.listener = listener;
     }
 
     /**
-     * inicia a mineração de uma mensagem
+     * Starts mining a message by finding a nonce that produces a hash with the
+     * specified number of leading zeros.
      *
-     * @param message mensagem
-     * @param zeros número de zeros do hash
-     * @throws Exception
+     * @param message The message to mine.
+     * @param zeros The number of leading zeros required in the hash.
+     * @throws Exception If an error occurs during the mining process.
      */
     public void startMining(String message, int zeros) throws Exception {
-        //está a minar
         if (isMining()) {
-            return; // Sair
+            return; // Exit if already mining
         }
         this.message = message;
-        //configurar os atributos    
-        int numCores = 4;
-        //int numCores = Runtime.getRuntime().availableProcessors();
+
+        int numCores = 4; // Use 4 cores for mining
         threads = new MinerThread[numCores];
-        //inicializar o globalNonce
         globalNonce = new AtomicInteger();
 
-        //executar as threads
+        // Start mining threads
         for (int i = 0; i < numCores; i++) {
             threads[i] = new MinerThread(globalNonce, message, zeros);
             threads[i].start();
         }
-        //notificar o listener
-        if (listener != null) {
-            listener.onStartMining("Start Mining " + numCores + " cores", zeros);
-        }
 
+        // Notify the listener that mining has started
+        if (listener != null) {
+            listener.onStartMining("Start Mining with " + numCores + " cores", zeros);
+        }
     }
 
     /**
-     * Terminar a mineração
+     * Stops the mining process and updates the global nonce.
      *
-     * @param nonce numero maior que zero
+     * @param nonce The nonce to be set, greater than zero.
      */
     public void stopMining(int nonce) {
-        //atualizar o nonce
         globalNonce.set(nonce);
         if (listener != null) {
-            listener.onStopMining("Stop Mining" + Thread.currentThread().getName(), nonce);
+            listener.onStopMining("Stop Mining from " + Thread.currentThread().getName(), nonce);
         }
-        //abortar as threads
+
+        // Interrupt all mining threads
         if (threads != null) {
             for (MinerThread thread : threads) {
                 thread.interrupt();
             }
             threads = null;
         }
-
     }
 
     /**
-     * Verificar se está a minerar
+     * Checks if the miner is currently mining.
      *
-     * @return está a minerar
+     * @return true if mining is in progress, false otherwise.
      */
     public boolean isMining() {
         return threads != null && globalNonce != null && globalNonce.get() <= 0;
     }
 
     /**
-     * Devolve o resultado da mineração ou zero
+     * Gets the current nonce.
      *
-     * @return nonce
+     * @return The current nonce, or zero if mining hasn't finished.
      */
     public int getNonce() {
         return globalNonce.get();
     }
 
     /**
-     * mensagem
+     * Gets the message that is being mined.
      *
-     * @return message
+     * @return The message being mined.
      */
     public String getMessage() {
         return message;
     }
 
     /**
-     * Tempo de minagem
+     * Converts the mining time in milliseconds to a formatted string.
      *
-     * @param miningTime
-     * @return message
+     * @param miningTime The mining time in milliseconds.
+     * @return The formatted time string.
      */
     public static String getMiningTimeText(long miningTime) {
         return df.format(new Date(miningTime));
     }
+
     private static final SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSSS");
 
     /**
-     * Devolve o resultado da mineração ou zero
+     * Waits for the mining threads to finish and returns the nonce.
      *
-     * @return nonce
-     * @throws java.lang.InterruptedException
+     * @return The mined nonce.
+     * @throws InterruptedException If the current thread is interrupted.
      */
     public int waitToNonce() throws InterruptedException {
         for (MinerThread thread : threads) {
@@ -151,29 +152,30 @@ public class Miner {
     }
 
     /**
-     * Calcula o valor do nonce da mensagem
+     * Mines a message by finding a valid nonce with the required number of
+     * leading zeros.
      *
-     * @param message mensagem
-     * @param zeros número de zeros
-     * @return
-     * @throws Exception
+     * @param message The message to mine.
+     * @param zeros The number of leading zeros required.
+     * @return The valid nonce.
+     * @throws Exception If an error occurs during mining.
      */
     public int mine(String message, int zeros) throws Exception {
         startMining(message, zeros);
         return waitToNonce();
     }
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    //:::::::::      I N T E G R I T Y         :::::::::::::::::::::::::::::::::    
-    ///////////////////////////////////////////////////////////////////////////
+    // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    // :::::::::      I N T E G R I T Y       ::::::::::::::::::::::::::::::::::::::: 
+    /////////////////////////////////////////////////////////////////////////////
     public static String hashAlgorithm = "SHA3-256";
 
     /**
-     * calcula a hash da mensagem com o nonce em Base64
+     * Calculates the hash of a message concatenated with the nonce.
      *
-     * @param data dados
-     * @param nonce nonce
-     * @return hash(mensagem + nonce)
+     * @param data The message.
+     * @param nonce The nonce.
+     * @return The Base64 encoded hash of the message and nonce.
      */
     public static String getHash(String data, int nonce) {
         try {
@@ -184,103 +186,98 @@ public class Miner {
     }
 
     /**
-     * calcula a hash da mensagem em Base64
+     * Calculates the hash of a message.
      *
-     * @param data mensagem
-     * @return Base64(hash(data))
-     * @throws Exception
+     * @param data The message to hash.
+     * @return The Base64 encoded hash of the message.
+     * @throws Exception If an error occurs during hashing.
      */
     public static String getHash(String data) throws Exception {
         MessageDigest md = MessageDigest.getInstance(hashAlgorithm);
         return Base64.getEncoder().encodeToString(md.digest(data.getBytes()));
     }
 
+    /**
+     * A thread that performs mining operations, searching for a valid nonce.
+     */
     private class MinerThread extends Thread {
 
-        //atributos da thread        
-        private final AtomicInteger sharedNonce;  // referência para o global nonce
-        private final String message;             // mensagem do bloco
-        private final int zeros;                  // número de zeros
-        private final MessageDigest hasher;       // calculador de  hashs da thread
+        private final AtomicInteger sharedNonce;  // Shared nonce across threads
+        private final String message;             // Message to mine
+        private final int zeros;                  // Required leading zeros in hash
+        private final MessageDigest hasher;       // Hashing algorithm used in the thread
 
         /**
-         * Thread para minar uma mensagem
+         * Initializes a new mining thread.
          *
-         * @param globalNonce objeto partilhado com o nonce global
-         * @param ticket objeto partilhado do sistema de tickets
-         * @param message mensagem a minar
-         * @param zeros número de zeros do hash
-         * @param listener listenar do mineiro
-         * @throws NoSuchAlgorithmException
+         * @param globalNonce Shared global nonce.
+         * @param message The message to mine.
+         * @param zeros The number of leading zeros required in the hash.
+         * @throws NoSuchAlgorithmException If the hash algorithm is invalid.
          */
         public MinerThread(AtomicInteger globalNonce, String message, int zeros) throws NoSuchAlgorithmException {
             this.sharedNonce = globalNonce;
             this.message = message;
             this.zeros = zeros;
-
-            //criar um objeto para a thread calcular hashs
             this.hasher = MessageDigest.getInstance(hashAlgorithm);
         }
 
         @Override
         public void run() {
             try {
-                //notificar o listener
+                // Notify listener that the thread is starting
                 if (listener != null) {
                     listener.onStartMining("RUN " + Thread.currentThread().getName(), zeros);
                 }
-                //Zeros no inicio do hash
+
+                // Create a prefix for the hash comparison (e.g., "0000" for 4 leading zeros)
                 String prefix = String.format("%0" + zeros + "d", 0);
-                //enquanto não for encontrado o nonce ( nonce <= 0 )
+
+                // Keep searching for the correct nonce until found
                 while (sharedNonce.get() <= 0) {
-                    //gerar uma numero e testá-lo
+                    // Generate a random nonce and test it
                     int number = Math.abs(ThreadLocalRandom.current().nextInt());
+
                     if (listener != null && number % 368 == 0) {
                         listener.onException(new Exception(number + ""), "number");
                     }
 
-                    //verificar se o hash esta correto
+                    // Check if the hash starts with the required number of zeros
                     if (getThreadHash(message, number).startsWith(prefix)) {
-                        //atualizar o nonce e terminar as threads
+                        // Update the shared nonce and notify listeners
                         sharedNonce.set(number);
-                        //notifificar os listeners
+
                         if (listener != null) {
                             listener.onException(new Exception(number + ""), "nonce");
                             listener.onNonceFound(Thread.currentThread().getName(), number);
                         }
                     }
                 }
-                //notificar os listeners que a thread terminou
-                if (listener != null) {
-                    //nome da thread e o nonce
 
+                // Notify listener that the thread has stopped
+                if (listener != null) {
                     listener.onStopMining(Thread.currentThread().getName(), sharedNonce.get());
                 }
             } catch (Exception ex) {
-                //alguma coisa deu errado  
-                //notificar os listeners a cada 9973 numeros
+                // Handle errors during mining
                 if (listener != null) {
-                    listener.onStopMining("ERROR " + ex.getMessage(), -1);
+                    listener.onStopMining("ERROR: " + ex.getMessage(), -1);
                 }
             }
         }
 
-        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
         /**
-         * calcula a hash da mensagem com o nonce em Base64
+         * Calculates the hash of a message concatenated with the nonce.
          *
-         * @param message mensagem
-         * @param nonce nonce
-         * @return hash(mensagem + nonce)
-         * @throws Exception
+         * @param message The message to hash.
+         * @param nonce The nonce to include in the hash.
+         * @return The Base64 encoded hash of the message and nonce.
+         * @throws Exception If an error occurs during hashing.
          */
         public String getThreadHash(String message, int nonce) throws Exception {
             return Base64.getEncoder().encodeToString(hasher.digest((message + nonce).getBytes()));
         }
-        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-        private static final long serialVersionUID = 202111021828L;
-        //:::::::::::::::::::::::::::  Copyright(c) M@nso  2021  :::::::::::::::::::
-        ///////////////////////////////////////////////////////////////////////////
     }
 
+    private static final long serialVersionUID = 202111021828L;
 }

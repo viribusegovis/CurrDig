@@ -3,6 +3,9 @@ package blockchain.utils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * Class used to Hash Strings
+ */
 public class Hash {
 
     /**

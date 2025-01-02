@@ -12,6 +12,11 @@ import java.util.Base64;
 import java.util.List;
 import p2p.IremoteP2P;
 
+/**
+ * The BlockchainExplorer class provides a graphical user interface to explore
+ * the blockchain. It allows users to view details of each block and search for
+ * transactions related to specific users.
+ */
 public class BlockchainExplorer extends JFrame {
 
     private IremoteP2P node;
@@ -23,8 +28,18 @@ public class BlockchainExplorer extends JFrame {
     private JComboBox<String> userComboBox;
     private JButton searchButton;
 
+    // DateTimeFormatter to format timestamps
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss - dd/MM/yyyy");
 
+    /**
+     * Constructor for initializing the BlockchainExplorer GUI.
+     *
+     * @param blockchain The blockchain to display and explore
+     * @param node The P2P node for accessing user data
+     * @param closeAppOnExit Whether to close the application on exit or just
+     * dispose the window
+     * @throws RemoteException If there is an issue with the remote node
+     */
     public BlockchainExplorer(BlockChain blockchain, IremoteP2P node, boolean closeAppOnExit) throws RemoteException {
         this.blockchain = blockchain;
         setTitle("Blockchain Explorer");
@@ -116,15 +131,19 @@ public class BlockchainExplorer extends JFrame {
         // Set the close operation to dispose the window, not exit the whole app
         if (closeAppOnExit) {
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        }else{
+        } else {
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         }
-        
 
         setVisible(true);
     }
 
-    // Get the list of usernames from the node
+    /**
+     * Get the list of usernames from the P2P node.
+     *
+     * @return A list of usernames
+     * @throws RemoteException If there is an issue accessing the remote node
+     */
     private List<String> getUsernamesList() throws RemoteException {
         List<String> usernames = new ArrayList<>();
         for (User user : node.listUsers()) {
@@ -133,6 +152,11 @@ public class BlockchainExplorer extends JFrame {
         return usernames;
     }
 
+    /**
+     * Returns the block data for the block list display.
+     *
+     * @return An array of block data as strings
+     */
     private String[] getBlockListData() {
         List<Block> blocks = blockchain.getChain();
         String[] blockData = new String[blocks.size()];
@@ -146,6 +170,11 @@ public class BlockchainExplorer extends JFrame {
         return blockData;
     }
 
+    /**
+     * Display the details of the selected block in the block list.
+     *
+     * @param index The index of the selected block
+     */
     private void showBlockDetails(int index) {
         if (index >= 0 && index < blockchain.getSize()) {
             Block block = blockchain.get(index);
@@ -183,7 +212,9 @@ public class BlockchainExplorer extends JFrame {
         }
     }
 
-    // Search for transactions by username
+    /**
+     * Search for transactions by username.
+     */
     private void searchTransactionsByUserKey() throws Exception {
         String searchUsername = (String) userComboBox.getSelectedItem();  // Get selected username
 
@@ -240,6 +271,14 @@ public class BlockchainExplorer extends JFrame {
         blockDetails.setText(results.toString());
     }
 
+    /**
+     * Get the username corresponding to the given public key.
+     *
+     * @param publicKey The public key to look up
+     * @return The username or a truncated version of the public key if not
+     * found
+     * @throws Exception If there is an issue retrieving the username
+     */
     private String getUsernameByPublicKey(PublicKey publicKey) throws Exception {
         for (User user : node.listUsers()) {
             if (user.getPub().equals(publicKey)) {

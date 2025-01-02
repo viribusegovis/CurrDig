@@ -32,7 +32,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 
 /**
- *
+ * Utils
  * @author Zulu
  */
 public class GuiUtils {

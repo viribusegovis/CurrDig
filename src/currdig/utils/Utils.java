@@ -22,10 +22,22 @@ import java.util.stream.Collectors;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 
+/**
+ * Utility class containing methods for loading users, fetching network time,
+ * and discovering P2P servers on the network.
+ */
 public class Utils {
 
     private static final String USER_DATA_PATH = "UsersData";
 
+    /**
+     * Loads all users from the filesystem by reading their public keys.
+     *
+     * @return A list of User objects.
+     * @throws IOException If there's an issue reading user directories or
+     * files.
+     * @throws Exception If there's an issue converting keys.
+     */
     public static List<User> loadUsers() throws IOException, Exception {
         List<User> users = new ArrayList<>();
         Path rootPath = Paths.get(USER_DATA_PATH);
@@ -42,8 +54,7 @@ public class Utils {
                 if (Files.exists(publicKeyPath)) {
                     byte[] publicKeyBytes = Files.readAllBytes(publicKeyPath);
                     PublicKey pub = SecurityUtils.getPublicKey(publicKeyBytes);
-
-                    users.add(new User(username, pub));
+                    users.add(new User(username, pub));  // Add user to list
                 }
             }
         }
@@ -51,6 +62,12 @@ public class Utils {
         return users;
     }
 
+    /**
+     * Fetches the current network time using an NTP server. Falls back to
+     * system time if network request fails.
+     *
+     * @return The current time as a LocalDateTime object.
+     */
     public static LocalDateTime fetchNetworkTime() {
         String ntpServer = "time.google.com"; // Public NTP server
         try {
@@ -66,6 +83,12 @@ public class Utils {
         }
     }
 
+    /**
+     * Discovers P2P servers by sending broadcast messages on a specified port
+     * and listening for responses.
+     *
+     * @return A list of unique server addresses discovered on the network.
+     */
     public static List<String> discoverServers() {
         Set<String> uniqueServers = new HashSet<>();  // Use a Set to ensure unique servers
         int[] portsToCheck = {12345}; // List of ports to check
@@ -76,7 +99,7 @@ public class Utils {
             socket.setSoTimeout(5000); // Timeout after 5 seconds
             InetAddress broadcastAddress = InetAddress.getByName("255.255.255.255");
 
-            // Loop through each port
+            // Loop through each port to send discovery requests
             for (int port : portsToCheck) {
                 try {
                     // Send broadcast request to discover peers on this port
@@ -105,15 +128,15 @@ public class Utils {
                 }
             }
         } catch (IOException e) {
-            // Handle outer exceptions
+            // Handle outer exceptions, e.g., socket creation failure
+            System.out.println("Error creating socket for server discovery: " + e.getMessage());
         } finally {
             if (socket != null && !socket.isClosed()) {
-                socket.close();
+                socket.close();  // Ensure the socket is closed after operation
             }
         }
 
-        // Convert the Set of unique servers back to a List
+        // Convert the Set of unique servers back to a List and return it
         return new ArrayList<>(uniqueServers);
     }
-
 }

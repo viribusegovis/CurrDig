@@ -190,7 +190,7 @@
                               <Component id="txtNodeAddress" max="32767" attributes="0"/>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="btnManual" max="32767" attributes="0"/>
+                                  <Component id="btnManualCon" max="32767" attributes="0"/>
                                   <Component id="btnFind" max="32767" attributes="0"/>
                               </Group>
                           </Group>
@@ -208,7 +208,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="btnManual" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnManualCon" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="txtNodeAddress" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -281,12 +281,12 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnFindActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JButton" name="btnManual">
+            <Component class="javax.swing.JButton" name="btnManualCon">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Manual Connection"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnManualActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnManualConActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>
