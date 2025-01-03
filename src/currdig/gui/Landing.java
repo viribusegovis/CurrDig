@@ -7,6 +7,7 @@ import java.awt.HeadlessException;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -306,6 +307,7 @@ public class Landing extends javax.swing.JFrame {
             // Retrieve the username and password from the text fields
             String username = txtLoginUsername.getText();
             String password = new String(txtLoginPassword.getPassword());
+            User user = null;
 
             // Validate input
             if (username.isEmpty() || password.isEmpty()) {
@@ -314,14 +316,14 @@ public class Landing extends javax.swing.JFrame {
             }
 
             // Authenticate with the P2P node
-            if (!node.authenticate(username, password)) {
+            if (!node.authenticateWithConsensus(username, password)) {
                 JOptionPane.showMessageDialog(this, "Invalid username or password.");
                 return;
+            } else {
+                // Retrieve the user object
+                user = node.getUser(username);
+                user.load(password);
             }
-
-            // Retrieve the user object
-            User user = node.getUser(username);
-            user.load(password);
 
             // If no exception was thrown, login is successful
             JOptionPane.showMessageDialog(this, "Login successful!");

@@ -8,6 +8,7 @@ import java.awt.HeadlessException;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -209,7 +210,7 @@ public class Client extends javax.swing.JFrame {
 
         try {
             // Authenticate with the P2P node
-            if (!node.authenticate(username, password)) {
+            if (!node.authenticateWithConsensus(username, password)) {
                 JOptionPane.showMessageDialog(this, "Invalid username or password.");
                 return;
             }

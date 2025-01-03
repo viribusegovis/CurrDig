@@ -8,6 +8,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.security.PublicKey;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -105,16 +106,27 @@ public interface IremoteP2P extends Remote {
      */
     public List<Entry> getAllTransactionsFromBC() throws RemoteException;
 
-    // ::::::::: T E S T E U S E R S :::::::::::
+    // ::::::::: U S E R S :::::::::::
     /**
-     * Authenticates a user with the provided username and password.
+     * Authenticates a user on the local node only based on their username and
+     * password.
      *
-     * @param username The username of the user.
-     * @param password The password of the user.
-     * @return True if authentication is successful, false otherwise.
+     * @param username The username of the user to authenticate.
+     * @param password The password to authenticate the user.
+     * @return True if the credentials are valid on this node, false otherwise.
+     * @throws java.rmi.RemoteException
+     */
+    public boolean authenticateLocal(String username, String password) throws RemoteException;
+
+    /**
+     * Authenticates a user using consensus across the network.
+     *
+     * @param username The username of the user to authenticate.
+     * @param password The password to authenticate the user.
+     * @return True if the consensus threshold is met, false otherwise.
      * @throws RemoteException If a remote communication error occurs.
      */
-    boolean authenticate(String username, String password) throws RemoteException;
+    public boolean authenticateWithConsensus(String username, String password) throws RemoteException;
 
     /**
      * Retrieves a user object for the given username.

@@ -23,7 +23,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import blockchain.utils.Miner;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -302,25 +304,69 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
 
     // ::::::::::::::::::::::::: USER MANAGEMENT :::::::::::::::::::::::::
     /**
-     * Authenticates a user based on their username and password. This method
-     * attempts to load the user's keys using the provided password.
+     * Authenticates a user on the local node only based on their username and
+     * password.
      *
      * @param username The username of the user to authenticate.
      * @param password The password to authenticate the user.
-     * @return True if authentication is successful, false otherwise.
-     * @throws RemoteException If a remote communication error occurs.
+     * @return True if the credentials are valid on this node, false otherwise.
      */
     @Override
-    public boolean authenticate(String username, String password) throws RemoteException {
+    public boolean authenticateLocal(String username, String password) {
         try {
             // Attempt to load the user's keys with the provided password
             User user = new User(username);
             user.load(password);
-            return true; // Successful authentication
+
+            return true; // Authentication successful
         } catch (Exception e) {
             // Log error and return false if authentication fails
-            System.err.println("Authentication failed for user " + username + ": " + e.getMessage());
+            System.err.println("Local authentication failed for user " + username + ": " + e.getMessage());
             return false; // Authentication failed
+        }
+    }
+
+    /**
+     * Authenticates a user using consensus across the network.
+     *
+     * @param username The username of the user to authenticate.
+     * @param password The password to authenticate the user.
+     * @return True if the consensus threshold is met, false otherwise.
+     * @throws RemoteException If a remote communication error occurs.
+     */
+    @Override
+    public boolean authenticateWithConsensus(String username, String password) throws RemoteException {
+        // Perform local authentication
+        boolean localAuthResult = authenticateLocal(username, password);
+
+        // Initialize variables for consensus
+        int trueCount = localAuthResult ? 1 : 0; // Include local result
+        int totalPeers = network.size();
+
+        // Iterate through peers and request authentication
+        for (IremoteP2P peer : network) {
+            if (!peer.getAddress().equals(this.address)) { // Avoid sending back to the originating node
+                try {
+                    if (peer.authenticateLocal(username, password)) {
+                        trueCount++;
+                    }
+                } catch (RemoteException e) {
+                    System.err.println("Failed to communicate with peer " + peer.getAddress() + ": " + e.getMessage());
+                }
+            }
+        }
+
+        // Calculate consensus threshold
+        double consensusPercentage = 0.75; // Adjust as needed
+        int requiredVotes = (int) Math.ceil(consensusPercentage * totalPeers);
+
+        // Check if consensus is reached
+        if (trueCount >= requiredVotes) {
+            System.err.println("Consensus reached: " + trueCount + "/" + totalPeers + " peers validated credentials.");
+            return true; // Consensus achieved
+        } else {
+            System.err.println("Consensus not reached: " + trueCount + "/" + totalPeers + " peers validated credentials.");
+            return false; // Consensus failed
         }
     }
 
