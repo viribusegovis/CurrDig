@@ -98,39 +98,56 @@ public final class MerkleTree implements Serializable {
      * @param data The data element to generate a proof for.
      * @return A list of hashes (proof).
      */
-    public List<String> getProof(Object data) {
-        List<String> proof = new ArrayList<>();
-        String targetHash = getHashValue(data.toString());
-
-        // Find the hash in the bottom level of the tree
-        int index = -1;
-        List<String> bottomLevel = hashTree.get(hashTree.size() - 1);
-        for (int i = 0; i < bottomLevel.size(); i++) {
-            if (bottomLevel.get(i).equals(targetHash)) {
-                index = i;
-                break;
-            }
+    /**
+ * Generates a proof for the given data element.
+ * @param data The data element to generate a proof for.
+ * @return A list of hashes that form the proof path
+ */
+public List<String> getProof(Object data) {
+    List<String> proof = new ArrayList<>();
+    String targetHash = getHashValue(data.toString());
+    
+    // Find the leaf node index
+    int index = -1;
+    List<String> bottomLevel = hashTree.get(hashTree.size() - 1);
+    for (int i = 0; i < bottomLevel.size(); i++) {
+        if (bottomLevel.get(i).equals(targetHash)) {
+            index = i;
+            break;
         }
-
-        if (index < 0) {
-            return proof;  // Return empty proof if the data is not found
-        }
-
-        int currentIndex = index;
-        // Traverse upwards through the tree to build the proof
-        for (int level = hashTree.size() - 1; level > 0; level--) {
-            List<String> currentLevel = hashTree.get(level);
-            if (currentIndex % 2 == 0) {
-                if (currentIndex + 1 < currentLevel.size()) {
-                    proof.add(currentLevel.get(currentIndex + 1));  // Add the sibling hash
-                }
-            } else {
-                proof.add(currentLevel.get(currentIndex - 1));  // Add the sibling hash
-            }
-            currentIndex /= 2;  // Move to the parent level
-        }
+    }
+    
+    // Return empty proof if data not found
+    if (index == -1) {
         return proof;
     }
+    
+    // Build proof by collecting sibling hashes
+    int currentIndex = index;
+    for (int level = hashTree.size() - 1; level > 0; level--) {
+        List<String> currentLevel = hashTree.get(level);
+        
+        // Get sibling hash based on whether current node is left or right child
+        if (currentIndex % 2 == 0) { // Left child
+            if (currentIndex + 1 < currentLevel.size()) {
+                proof.add(currentLevel.get(currentIndex + 1)); // Add right sibling
+            }
+        } else { // Right child
+            proof.add(currentLevel.get(currentIndex - 1)); // Add left sibling
+        }
+        
+        // Move up to parent level
+        currentIndex = currentIndex / 2;
+    }
+    
+    // Add root hash as final element
+    if (!proof.isEmpty()) {
+        proof.add(getRoot());
+    }
+    
+    return proof;
+}
+
 
     /**
      * Verifies if a proof is valid for a given data element.

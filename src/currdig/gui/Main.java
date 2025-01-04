@@ -3,14 +3,17 @@ package currdig.gui;
 import blockchain.utils.Block;
 import blockchain.utils.BlockChain;
 import blockchain.utils.Hash;
+import blockchain.utils.MerkleTree;
 import blockchain.utils.SecurityUtils;
 import currdig.core.Entry;
 import currdig.core.User;
 import currdig.utils.Utils;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.HeadlessException;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -26,6 +29,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -48,6 +53,7 @@ public class Main extends javax.swing.JFrame {
     private String username;
 
     private List<User> users;
+    private Block selectedBlock;
 
     public static String fileCurrDig = "currdig.obj";
 
@@ -95,6 +101,8 @@ public class Main extends javax.swing.JFrame {
         }
 
         listUsers();// Populate the user list
+        jList1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        jList2.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         // Add a selection listener to the user list
         listUsers.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
@@ -133,7 +141,7 @@ public class Main extends javax.swing.JFrame {
                 if (jTabbedPane1.getSelectedIndex() == 1) {
                     try {
                         // Assuming History is the second tab
-                        updateHistoryList();
+                        displayBlockList();
                     } catch (Exception ex) {
                         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -212,19 +220,16 @@ public class Main extends javax.swing.JFrame {
         jPanel7 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
-        jPanel5 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextAreaDescricao = new javax.swing.JTextArea();
         jScrollPane3 = new javax.swing.JScrollPane();
         txtEntity = new javax.swing.JTextArea();
         jScrollPane6 = new javax.swing.JScrollPane();
         txtUser = new javax.swing.JTextArea();
-        jSeparator2 = new javax.swing.JSeparator();
         btnRefreshUserList = new javax.swing.JButton();
         btnBC = new javax.swing.JButton();
         btnActiveTrans = new javax.swing.JButton();
         btnAddTrans = new javax.swing.JButton();
-        btnCreateBlock = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jTextFieldNomePesquisar = new javax.swing.JTextField();
@@ -255,7 +260,7 @@ public class Main extends javax.swing.JFrame {
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         txtProof = new javax.swing.JTextField();
-        btnRefreshBC = new javax.swing.JButton();
+        btnVerifyProof = new javax.swing.JButton();
         jScrollPane7 = new javax.swing.JScrollPane();
         jList2 = new javax.swing.JList<>();
 
@@ -267,9 +272,6 @@ public class Main extends javax.swing.JFrame {
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
         jPanel1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-
-        jPanel5.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel5.setLayout(new java.awt.BorderLayout());
 
         jTextAreaDescricao.setColumns(20);
         jTextAreaDescricao.setLineWrap(true);
@@ -324,13 +326,6 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
-        btnCreateBlock.setText("Create Block (DEMO ONLY)");
-        btnCreateBlock.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCreateBlockActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -338,16 +333,13 @@ public class Main extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2)
+                    .addComponent(btnBC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
                     .addComponent(jScrollPane3)
                     .addComponent(jScrollPane6)
-                    .addComponent(btnRefreshUserList, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jSeparator2)
-                    .addComponent(btnAddTrans, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
-                    .addComponent(btnCreateBlock, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnBC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnActiveTrans, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnActiveTrans, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnAddTrans, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnRefreshUserList, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
@@ -364,26 +356,20 @@ public class Main extends javax.swing.JFrame {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnActiveTrans)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnBC)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnRefreshUserList)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 129, Short.MAX_VALUE)
                 .addComponent(btnAddTrans)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnCreateBlock)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
-                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(btnActiveTrans)
+                .addGap(18, 18, 18)
+                .addComponent(btnRefreshUserList)
+                .addGap(18, 18, 18)
+                .addComponent(btnBC)
                 .addContainerGap())
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addGap(304, 304, 304)
                     .addComponent(jLabel3)
-                    .addContainerGap(269, Short.MAX_VALUE)))
+                    .addContainerGap(348, Short.MAX_VALUE)))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Search by name"));
@@ -404,11 +390,6 @@ public class Main extends javax.swing.JFrame {
 
         listUsers.setBorder(null);
         listUsers.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        listUsers.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "teste", "teste" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         listUsers.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane4.setViewportView(listUsers);
 
@@ -420,9 +401,7 @@ public class Main extends javax.swing.JFrame {
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE)
-                .addContainerGap())
+            .addComponent(jScrollPane4)
         );
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
@@ -437,7 +416,7 @@ public class Main extends javax.swing.JFrame {
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel2.getAccessibleContext().setAccessibleName("User List");
@@ -457,19 +436,15 @@ public class Main extends javax.swing.JFrame {
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(89, Short.MAX_VALUE))
+                    .addGroup(jPanel7Layout.createSequentialGroup()
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())))
         );
 
         jTabbedPane1.addTab("Submitions", jPanel7);
 
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         jScrollPane1.setViewportView(jList1);
 
         jPanel9.setBorder(javax.swing.BorderFactory.createTitledBorder("Details"));
@@ -496,6 +471,14 @@ public class Main extends javax.swing.JFrame {
 
         jLabel10.setText("Nonce");
 
+        btnVerifyProof.setText("Verify");
+        btnVerifyProof.setEnabled(false);
+        btnVerifyProof.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnVerifyProofActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
         jPanel9Layout.setHorizontalGroup(
@@ -506,20 +489,22 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(jScrollPane5)
                     .addGroup(jPanel9Layout.createSequentialGroup()
                         .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 440, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel9Layout.createSequentialGroup()
+                                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGap(222, 222, 222))
+                            .addComponent(jTextField1))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel9Layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(0, 0, Short.MAX_VALUE))
+                                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                .addGap(349, 349, 349))
                             .addComponent(txtEntityPublicKey)))
                     .addComponent(jLabel5)
                     .addGroup(jPanel9Layout.createSequentialGroup()
                         .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel9Layout.createSequentialGroup()
                                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtTimestamp, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtTimestamp)
                                     .addComponent(jLabel4))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -529,18 +514,27 @@ public class Main extends javax.swing.JFrame {
                                     .addComponent(txtTransactionHash)))
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel9Layout.createSequentialGroup()
                                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel7)
-                                    .addComponent(txtBlockHash, javax.swing.GroupLayout.PREFERRED_SIZE, 295, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(jPanel9Layout.createSequentialGroup()
+                                        .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGap(236, 236, 236))
+                                    .addComponent(txtBlockHash))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtMerkleRoot, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel8))))
+                                    .addComponent(txtMerkleRoot)
+                                    .addGroup(jPanel9Layout.createSequentialGroup()
+                                        .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGap(226, 226, 226)))))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtNonce, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel9)
+                            .addComponent(txtNonce)
+                            .addGroup(jPanel9Layout.createSequentialGroup()
+                                .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGap(216, 216, 216))
                             .addComponent(jLabel10)
-                            .addComponent(txtProof, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addGroup(jPanel9Layout.createSequentialGroup()
+                                .addComponent(txtProof)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnVerifyProof)))))
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
@@ -576,26 +570,15 @@ public class Main extends javax.swing.JFrame {
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtBlockHash, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtMerkleRoot, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtProof, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtProof, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnVerifyProof))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 172, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
-        btnRefreshBC.setText("Refresh");
-        btnRefreshBC.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRefreshBCActionPerformed(evt);
-            }
-        });
-
-        jList2.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         jScrollPane7.setViewportView(jList2);
 
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
@@ -607,22 +590,18 @@ public class Main extends javax.swing.JFrame {
                 .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel8Layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane7)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnRefreshBC)))
+                        .addComponent(jScrollPane7)))
                 .addContainerGap())
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
-                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
-                    .addGroup(jPanel8Layout.createSequentialGroup()
-                        .addGap(122, 122, 122)
-                        .addComponent(btnRefreshBC))
-                    .addComponent(jScrollPane7))
+                .addContainerGap()
+                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
+                    .addComponent(jScrollPane7, javax.swing.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
@@ -747,6 +726,7 @@ public class Main extends javax.swing.JFrame {
                     int selectedIndex = jList1.getSelectedIndex();
                     if (selectedIndex != -1) {
                         Block selectedBlock = allBlocks.get(selectedIndex);
+                        this.selectedBlock = selectedBlock;
                         displayBlockDetails(selectedBlock); // Display block details
                         displayTransactionsForBlock(selectedBlock); // Display transactions of selected block
                         resetTransactionList(); // Clear previous transaction selection in jList2
@@ -781,29 +761,33 @@ public class Main extends javax.swing.JFrame {
      * @param selectedBlock The block whose transactions need to be displayed.
      */
     private void displayTransactionsForBlock(Block selectedBlock) {
-        // Retrieve the transactions (entries) from the buffer of the selected block
-        List<Entry> selectedTransactions = selectedBlock.getBuffer();
+        // Store transactions in a final list to ensure thread safety
+        final List<Entry> selectedTransactions = selectedBlock.getBuffer();
 
-        // Create a DefaultListModel to hold transaction descriptions for the list
         DefaultListModel<String> transactionListModel = new DefaultListModel<>();
 
-        // Populate the model with transaction descriptions and truncated public key
+        // Populate model with transactions
         for (Entry entry : selectedTransactions) {
             transactionListModel.addElement("Transaction: " + entry.getDescription() + " - "
                     + Base64.getEncoder().encodeToString(entry.getTargetUserPublicKey().getEncoded()).substring(0, 10) + "...");
         }
 
-        // Set the model for jList2 (the transaction list UI component)
+        // Set model for transaction list
         jList2.setModel(transactionListModel);
 
-        // Add a listener to handle transaction selection
+        // Remove any existing listeners to prevent duplicates
+        for (javax.swing.event.ListSelectionListener listener : jList2.getListSelectionListeners()) {
+            jList2.removeListSelectionListener(listener);
+        }
+
+        // Add new selection listener
         jList2.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) { // Ensure the event is the final selection
+            if (!e.getValueIsAdjusting()) {
                 int selectedTransactionIndex = jList2.getSelectedIndex();
-                if (selectedTransactionIndex != -1) {
-                    // Fetch and display details for the selected transaction
+                if (selectedTransactionIndex >= 0 && selectedTransactionIndex < selectedTransactions.size()) {
                     Entry selectedEntry = selectedTransactions.get(selectedTransactionIndex);
                     displayTransactionDetailsForEntry(selectedEntry, selectedBlock);
+
                 }
             }
         });
@@ -850,22 +834,27 @@ public class Main extends javax.swing.JFrame {
         // Optionally, display the nonce associated with the block
         txtNonce.setText(String.valueOf(selectedBlock.getNonce()));
 
-        // Check if a Merkle Tree exists for the selected block
+        // Check if Merkle Tree exists
         if (selectedBlock.getMerkleTree() != null) {
-            // Get the proof for the selected entry from the Merkle Tree
-            List<String> proof = selectedBlock.getMerkleTree().getProof(selectedEntry);
+            // Get the Merkle root
+            String root = selectedBlock.getMerkleTree().getRoot();
+            txtMerkleRoot.setText(root);
 
-            // Format the proof as a string and display it in the proof text field
-            StringBuilder proofText = new StringBuilder();
-            for (String hash : proof) {
-                proofText.append(hash).append("\n");
+            // Check if it's a single transaction block
+            if (selectedBlock.getBuffer().size() == 1) {
+                txtProof.setText(root);
+            } else {
+                // Get and format proof for multiple transaction blocks
+                List<String> proof = selectedBlock.getMerkleTree().getProof(selectedEntry);
+                StringBuilder proofText = new StringBuilder();
+                for (String hash : proof) {
+                    proofText.append(hash).append("\n");
+                }
+                txtProof.setText(proofText.toString());
             }
-
-            // Display the Merkle proof and root in the corresponding text fields
-            txtProof.setText(proofText.toString());
-            txtMerkleRoot.setText(selectedBlock.getMerkleTree().getRoot());
+            btnVerifyProof.setEnabled(true);
         } else {
-            // If Merkle Tree is not available, indicate that the block is not finalized
+            // Handle unfinalized block
             txtMerkleRoot.setText("Block not finalized");
             txtProof.setText("Block not finalized");
         }
@@ -886,6 +875,7 @@ public class Main extends javax.swing.JFrame {
         txtNonce.setText("");
         txtProof.setText("");
         txtMerkleRoot.setText("");
+        btnVerifyProof.setEnabled(false);
     }
 
     /**
@@ -900,31 +890,66 @@ public class Main extends javax.swing.JFrame {
     }//GEN-LAST:event_btnSearchUserActionPerformed
 
     /**
-     * A flag that indicates whether the mining process is currently running.
-     * This variable is accessed and modified in a thread-safe manner using the
-     * 'volatile' keyword.
+     * Action handler for the "Add Entry" button. This method is triggered when
+     * the user clicks the "Add Entry" button. It disables the button, retrieves
+     * input data, creates a transaction entry, signs it, and adds it to the
+     * blockchain. The button is re-enabled after the operation is completed.
+     *
+     * @param evt The action event triggered by clicking the button.
      */
-    private volatile boolean isMining = false;
+    private void btnAddTransActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddTransActionPerformed
+        // Disable the button to prevent multiple clicks during transaction processing
+        btnAddTrans.setEnabled(false);
 
-    /**
-     * Starts a timer that monitors the mining process every second. If mining
-     * is not in progress, it enables the "Create Block" button. The monitoring
-     * check is performed on the Event Dispatch Thread (EDT).
-     */
-    private void startMiningMonitor() {
-        // Create a Timer that runs every second
-        Timer miningMonitor = new Timer(1000, e -> {
-            // Run this check every second
-            SwingUtilities.invokeLater(() -> {
-                // If mining is not in progress, enable the button to create a new block
-                if (!isMining) {
-                    btnCreateBlock.setEnabled(true);
+        // Start a new thread to handle adding the entry in the background
+        new Thread(() -> {
+            try {
+                // Get the description from the text area (transaction description)
+                String description = jTextAreaDescricao.getText();
+
+                // Retrieve the target user's public key from the text area (Base64 encoded)
+                String targetUserPubKeyString = txtUser.getText();
+                PublicKey targetUserPubKey = SecurityUtils.getPublicKey(Base64.getDecoder().decode(targetUserPubKeyString));
+
+                // Create a new Entry with the description, current user's public key, and the target user's public key
+                Entry newEntry = new Entry(description, this.pubKey, targetUserPubKey); // Updated constructor for Entry
+
+                // Sign the Entry using the current user's private key
+                byte[] signature = SecurityUtils.sign(newEntry.toString().getBytes(), this.privKey);
+
+                // Add the Entry to the blockchain (or curriculum system)
+                if (!node.addTransaction(targetUserPubKey, newEntry, signature)) {
+                    throw new Exception("Failed to add transaction");
                 }
-            });
-        });
 
-        miningMonitor.start(); // Start the timer that periodically checks the mining status
-    }
+                // Clear the input fields after successful transaction
+                jTextAreaDescricao.setText("");
+                txtUser.setText("");
+                listUsers.clearSelection();
+
+                // Update the history list of transactions or entries
+                updateHistoryList();
+
+                // Show a success message
+                JOptionPane.showMessageDialog(this, "Entry added successfully!");
+
+                // Re-enable the button in the Event Dispatch Thread
+                SwingUtilities.invokeLater(() -> {
+                    btnAddTrans.setEnabled(true);
+                });
+
+            } catch (Exception ex) {
+                // Handle exceptions (e.g., errors in signing, adding transactions)
+                JOptionPane.showMessageDialog(this, "Error adding entry: " + ex.getMessage());
+
+                // Ensure the button is re-enabled if an error occurs
+                btnAddTrans.setEnabled(true);
+            } finally {
+                // Ensure the button is enabled in case of any error or successful completion
+                btnAddTrans.setEnabled(true);
+            }
+        }).start(); // Start the operation in a new thread to avoid blocking the UI
+    }//GEN-LAST:event_btnAddTransActionPerformed
 
     /**
      * Action handler for the button that fetches the transactions. This method
@@ -936,43 +961,62 @@ public class Main extends javax.swing.JFrame {
     private void btnActiveTransActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActiveTransActionPerformed
         // Create a SwingWorker to handle the transaction retrieval in a background thread
         SwingWorker<CopyOnWriteArraySet, Void> worker = new SwingWorker<>() {
-            @Override
-            protected CopyOnWriteArraySet doInBackground() throws RemoteException {
-                // Fetch transactions from the node (this runs in a background thread)
-                return node.getTransactions();
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    // Get the retrieved transactions (this happens on the EDT)
-                    CopyOnWriteArraySet transactions = get();
-
-                    // Display the transactions in a JOptionPane
-                    JOptionPane.showMessageDialog(null, transactions, "Notification", JOptionPane.INFORMATION_MESSAGE);
-                } catch (Exception ex) {
-                    // Log the exception if there is an issue with retrieving the transactions
-                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-
-                    // Handle potential exceptions (e.g., RemoteException)
-                    JOptionPane.showMessageDialog(null, "Failed to fetch transactions", "Error", JOptionPane.ERROR_MESSAGE);
+        @Override
+        protected CopyOnWriteArraySet doInBackground() throws RemoteException {
+            return node.getTransactions();
+        }
+        
+        @Override
+        protected void done() {
+            try {
+                CopyOnWriteArraySet transactions = get();
+                
+                // Create formatted string for display
+                StringBuilder displayText = new StringBuilder();
+                displayText.append("Active Transactions:\n\n");
+                
+                int count = 1;
+                for (Object trans : transactions) {
+                    Entry entry = (Entry) trans;
+                    displayText.append("Transaction #").append(count).append("\n");
+                    displayText.append("Description: ").append(entry.getDescription()).append("\n");
+                    displayText.append("Timestamp: ").append(entry.getDateTime()).append("\n");
+                    displayText.append("Target User: ").append(
+                        Base64.getEncoder().encodeToString(
+                            entry.getTargetUserPublicKey().getEncoded()).substring(0, 15)
+                    ).append("...\n");
+                    displayText.append("Entity: ").append(
+                        Base64.getEncoder().encodeToString(
+                            entry.getEntityPublicKey().getEncoded()).substring(0, 15)
+                    ).append("...\n");
+                    displayText.append("----------------------------------------\n");
+                    count++;
                 }
+                
+                // Create and configure JTextArea
+                JTextArea textArea = new JTextArea(displayText.toString());
+                textArea.setEditable(false);
+                textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+                textArea.setMargin(new Insets(10, 10, 10, 10));
+                
+                // Add scrolling capability
+                JScrollPane scrollPane = new JScrollPane(textArea);
+                scrollPane.setPreferredSize(new Dimension(500, 400));
+                
+                // Show in dialog
+                JOptionPane.showMessageDialog(null, scrollPane, 
+                    "Active Transactions", JOptionPane.INFORMATION_MESSAGE);
+                
+            } catch (Exception ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(null, 
+                    "Failed to fetch transactions", "Error", 
+                    JOptionPane.ERROR_MESSAGE);
             }
-        };
-
-        // Execute the SwingWorker to fetch transactions
-        worker.execute();
+        }
+    };
+    worker.execute();
     }//GEN-LAST:event_btnActiveTransActionPerformed
-
-    /**
-     * Action handler for the button that displays the list of blocks. This
-     * method is triggered when the user clicks the "Display Block List" button.
-     *
-     * @param evt The action event triggered by clicking the button.
-     */
-    private void btnRefreshBCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshBCActionPerformed
-        displayBlockList();
-    }//GEN-LAST:event_btnRefreshBCActionPerformed
 
     /**
      * Action handler for the button that retrieves and displays the blockchain.
@@ -1029,15 +1073,37 @@ public class Main extends javax.swing.JFrame {
         listUsers();
     }//GEN-LAST:event_btnRefreshUserListActionPerformed
 
-    /**
-     * Action handler for the "Create Block" button. This method is triggered
-     * when the user clicks the "Create Block" button to start the mining
-     * process. It disables the button to prevent multiple clicks and starts a
-     * new thread to handle block creation and mining.
-     *
-     * @param evt The action event triggered by clicking the button.
-     */
-    private void btnCreateBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCreateBlockActionPerformed
+    private void btnVerifyProofActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerifyProofActionPerformed
+        // Get selected transaction
+        int selectedTransactionIndex = jList2.getSelectedIndex();
+
+        if (selectedTransactionIndex < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a transaction");
+            return;
+        }
+
+        Entry selectedEntry = selectedBlock.getBuffer().get(selectedTransactionIndex);
+        boolean isValid = false;
+
+        if (selectedBlock.getBuffer().size() == 1) {
+            // For single transaction blocks, compare the hash directly
+            String transactionHash = MerkleTree.getHashValue(selectedEntry.toString());
+            String rootHash = selectedBlock.getMerkleTree().getRoot();
+            isValid = transactionHash.equals(rootHash);
+        } else {
+            // For multiple transactions, verify using Merkle proof
+            List<String> proof = selectedBlock.getMerkleTree().getProof(selectedEntry);
+            isValid = MerkleTree.isProofValid(selectedEntry, proof);
+        }
+
+        String message = isValid
+                ? "Transaction is valid and included in block"
+                : "Transaction verification failed";
+
+        JOptionPane.showMessageDialog(this, message);
+    }//GEN-LAST:event_btnVerifyProofActionPerformed
+
+    /*private void btnCreateBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCreateBlockActionPerformed
         // Disable the button to prevent multiple clicks during mining
         btnCreateBlock.setEnabled(false);
         isMining = true; // Mark mining as in progress
@@ -1083,68 +1149,33 @@ public class Main extends javax.swing.JFrame {
                 SwingUtilities.invokeLater(() -> btnCreateBlock.setEnabled(true));
             }
         }).start(); // Start the mining process in a new thread
-    }//GEN-LAST:event_btnCreateBlockActionPerformed
+    }*/
+    /**
+     * A flag that indicates whether the mining process is currently running.
+     * This variable is accessed and modified in a thread-safe manner using the
+     * 'volatile' keyword.
+     */
+    private volatile boolean isMining = false;
 
     /**
-     * Action handler for the "Add Entry" button. This method is triggered when
-     * the user clicks the "Add Entry" button. It disables the button, retrieves
-     * input data, creates a transaction entry, signs it, and adds it to the
-     * blockchain. The button is re-enabled after the operation is completed.
-     *
-     * @param evt The action event triggered by clicking the button.
+     * Starts a timer that monitors the mining process every second. If mining
+     * is not in progress, it enables the "Create Block" button. The monitoring
+     * check is performed on the Event Dispatch Thread (EDT).
      */
-    private void btnAddTransActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddTransActionPerformed
-        // Disable the button to prevent multiple clicks during transaction processing
-        btnAddTrans.setEnabled(false);
-
-        // Start a new thread to handle adding the entry in the background
-        new Thread(() -> {
-            try {
-                // Get the description from the text area (transaction description)
-                String description = jTextAreaDescricao.getText();
-
-                // Retrieve the target user's public key from the text area (Base64 encoded)
-                String targetUserPubKeyString = txtUser.getText();
-                PublicKey targetUserPubKey = SecurityUtils.getPublicKey(Base64.getDecoder().decode(targetUserPubKeyString));
-
-                // Create a new Entry with the description, current user's public key, and the target user's public key
-                Entry newEntry = new Entry(description, this.pubKey, targetUserPubKey); // Updated constructor for Entry
-
-                // Sign the Entry using the current user's private key
-                byte[] signature = SecurityUtils.sign(newEntry.toString().getBytes(), this.privKey);
-
-                // Add the Entry to the blockchain (or curriculum system)
-                if (!node.addTransaction(targetUserPubKey, newEntry, signature)) {
-                    throw new Exception("Failed to add transaction");
+    private void startMiningMonitor() {
+        // Create a Timer that runs every second
+        Timer miningMonitor = new Timer(1000, e -> {
+            // Run this check every second
+            SwingUtilities.invokeLater(() -> {
+                // If mining is not in progress, enable the button to create a new block
+                if (!isMining) {
+                    //btnCreateBlock.setEnabled(true);
                 }
+            });
+        });
 
-                // Clear the input fields after successful transaction
-                jTextAreaDescricao.setText("");
-                txtUser.setText("");
-
-                // Update the history list of transactions or entries
-                updateHistoryList();
-
-                // Show a success message
-                JOptionPane.showMessageDialog(this, "Entry added successfully!");
-
-                // Re-enable the button in the Event Dispatch Thread
-                SwingUtilities.invokeLater(() -> {
-                    btnAddTrans.setEnabled(true);
-                });
-
-            } catch (Exception ex) {
-                // Handle exceptions (e.g., errors in signing, adding transactions)
-                JOptionPane.showMessageDialog(this, "Error adding entry: " + ex.getMessage());
-
-                // Ensure the button is re-enabled if an error occurs
-                btnAddTrans.setEnabled(true);
-            } finally {
-                // Ensure the button is enabled in case of any error or successful completion
-                btnAddTrans.setEnabled(true);
-            }
-        }).start(); // Start the operation in a new thread to avoid blocking the UI
-    }//GEN-LAST:event_btnAddTransActionPerformed
+        miningMonitor.start(); // Start the timer that periodically checks the mining status
+    }
 
     /**
      * Updates the list of entries associated with the current entity. This
@@ -1307,10 +1338,9 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton btnActiveTrans;
     private javax.swing.JButton btnAddTrans;
     private javax.swing.JButton btnBC;
-    private javax.swing.JButton btnCreateBlock;
-    private javax.swing.JButton btnRefreshBC;
     private javax.swing.JButton btnRefreshUserList;
     private javax.swing.JButton btnSearchUser;
+    private javax.swing.JButton btnVerifyProof;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
@@ -1327,7 +1357,6 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
@@ -1338,7 +1367,6 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
-    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTextArea jTextAreaDescricao;
     private javax.swing.JTextField jTextField1;
