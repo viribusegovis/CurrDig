@@ -92,62 +92,56 @@ public final class MerkleTree implements Serializable {
     }
 
     /**
-     * Generates a proof for the given data. The proof is a list of hashes that
-     * can be used to verify that a data element is part of the Merkle tree.
+     * calculate the proff of the element
      *
-     * @param data The data element to generate a proof for.
-     * @return A list of hashes (proof).
+     * @param data element
+     * @return list of proofs
      */
-    /**
- * Generates a proof for the given data element.
- * @param data The data element to generate a proof for.
- * @return A list of hashes that form the proof path
- */
-public List<String> getProof(Object data) {
-    List<String> proof = new ArrayList<>();
-    String targetHash = getHashValue(data.toString());
-    
-    // Find the leaf node index
-    int index = -1;
-    List<String> bottomLevel = hashTree.get(hashTree.size() - 1);
-    for (int i = 0; i < bottomLevel.size(); i++) {
-        if (bottomLevel.get(i).equals(targetHash)) {
-            index = i;
-            break;
-        }
-    }
-    
-    // Return empty proof if data not found
-    if (index == -1) {
-        return proof;
-    }
-    
-    // Build proof by collecting sibling hashes
-    int currentIndex = index;
-    for (int level = hashTree.size() - 1; level > 0; level--) {
-        List<String> currentLevel = hashTree.get(level);
-        
-        // Get sibling hash based on whether current node is left or right child
-        if (currentIndex % 2 == 0) { // Left child
-            if (currentIndex + 1 < currentLevel.size()) {
-                proof.add(currentLevel.get(currentIndex + 1)); // Add right sibling
-            }
-        } else { // Right child
-            proof.add(currentLevel.get(currentIndex - 1)); // Add left sibling
-        }
-        
-        // Move up to parent level
-        currentIndex = currentIndex / 2;
-    }
-    
-    // Add root hash as final element
-    if (!proof.isEmpty()) {
-        proof.add(getRoot());
-    }
-    
-    return proof;
-}
+    public List<String> getProof(Object data) {
+        //list of proofs
+        List<String> proof = new ArrayList<>();
 
+        //index of element
+        int index = elements.indexOf(data.toString());
+        if (index == -1) { //element not found
+            System.out.println("Element not found");
+            return proof; // empty proof
+        }
+        //calculate proof
+        return getProof(index, hashTree.size() - 1, proof);
+    }
+
+    /**
+     * calculate the proff of the element
+     *
+     * @param index index of element
+     * @param level level of the tree
+     * @param proof list of proofs
+     * @return list of proofs
+     */
+    private List<String> getProof(int index, int level, List<String> proof) {
+
+        if (level > 0) { // not the top
+            if (index % 2 == 0) { // is even [ index or index+1]               
+                //if have elements in the right
+                if (index + 1 < hashTree.get(level).size()) {
+                    //add element of the right
+                    proof.add(hashTree.get(level).get(index + 1));
+                } else {
+                    //add the hash of element
+                    proof.add(hashTree.get(level).get(index));
+                }
+            } else {// is odd [ index - 1 ]
+                proof.add(hashTree.get(level).get(index - 1));
+            }
+            //calculate top level
+            return getProof(index / 2, level - 1, proof);
+        } else {
+            //add root of tree
+            proof.add(getRoot());
+            return proof;
+        }
+    }
 
     /**
      * Verifies if a proof is valid for a given data element.
