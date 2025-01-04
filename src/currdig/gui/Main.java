@@ -677,8 +677,15 @@ public class Main extends javax.swing.JFrame {
             int selectedIndex = listUsers.getSelectedIndex();
 
             if (selectedIndex != -1) {
+
+                // Retrieve the list of users (this runs on the EDT)
+                List<User> fetchedUsers = users;
+
+                // Filter out the current user
+                fetchedUsers.removeIf(user -> user.getName().equals(username));
+
                 // Get the selected user
-                User selectedUser = users.get(selectedIndex);
+                User selectedUser = fetchedUsers.get(selectedIndex);
 
                 // Get the public key of the selected user
                 PublicKey pubKey = selectedUser.getPub();
@@ -961,61 +968,61 @@ public class Main extends javax.swing.JFrame {
     private void btnActiveTransActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActiveTransActionPerformed
         // Create a SwingWorker to handle the transaction retrieval in a background thread
         SwingWorker<CopyOnWriteArraySet, Void> worker = new SwingWorker<>() {
-        @Override
-        protected CopyOnWriteArraySet doInBackground() throws RemoteException {
-            return node.getTransactions();
-        }
-        
-        @Override
-        protected void done() {
-            try {
-                CopyOnWriteArraySet transactions = get();
-                
-                // Create formatted string for display
-                StringBuilder displayText = new StringBuilder();
-                displayText.append("Active Transactions:\n\n");
-                
-                int count = 1;
-                for (Object trans : transactions) {
-                    Entry entry = (Entry) trans;
-                    displayText.append("Transaction #").append(count).append("\n");
-                    displayText.append("Description: ").append(entry.getDescription()).append("\n");
-                    displayText.append("Timestamp: ").append(entry.getDateTime()).append("\n");
-                    displayText.append("Target User: ").append(
-                        Base64.getEncoder().encodeToString(
-                            entry.getTargetUserPublicKey().getEncoded()).substring(0, 15)
-                    ).append("...\n");
-                    displayText.append("Entity: ").append(
-                        Base64.getEncoder().encodeToString(
-                            entry.getEntityPublicKey().getEncoded()).substring(0, 15)
-                    ).append("...\n");
-                    displayText.append("----------------------------------------\n");
-                    count++;
-                }
-                
-                // Create and configure JTextArea
-                JTextArea textArea = new JTextArea(displayText.toString());
-                textArea.setEditable(false);
-                textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-                textArea.setMargin(new Insets(10, 10, 10, 10));
-                
-                // Add scrolling capability
-                JScrollPane scrollPane = new JScrollPane(textArea);
-                scrollPane.setPreferredSize(new Dimension(500, 400));
-                
-                // Show in dialog
-                JOptionPane.showMessageDialog(null, scrollPane, 
-                    "Active Transactions", JOptionPane.INFORMATION_MESSAGE);
-                
-            } catch (Exception ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                JOptionPane.showMessageDialog(null, 
-                    "Failed to fetch transactions", "Error", 
-                    JOptionPane.ERROR_MESSAGE);
+            @Override
+            protected CopyOnWriteArraySet doInBackground() throws RemoteException {
+                return node.getTransactions();
             }
-        }
-    };
-    worker.execute();
+
+            @Override
+            protected void done() {
+                try {
+                    CopyOnWriteArraySet transactions = get();
+
+                    // Create formatted string for display
+                    StringBuilder displayText = new StringBuilder();
+                    displayText.append("Active Transactions:\n\n");
+
+                    int count = 1;
+                    for (Object trans : transactions) {
+                        Entry entry = (Entry) trans;
+                        displayText.append("Transaction #").append(count).append("\n");
+                        displayText.append("Description: ").append(entry.getDescription()).append("\n");
+                        displayText.append("Timestamp: ").append(entry.getDateTime()).append("\n");
+                        displayText.append("Target User: ").append(
+                                Base64.getEncoder().encodeToString(
+                                        entry.getTargetUserPublicKey().getEncoded()).substring(0, 15)
+                        ).append("...\n");
+                        displayText.append("Entity: ").append(
+                                Base64.getEncoder().encodeToString(
+                                        entry.getEntityPublicKey().getEncoded()).substring(0, 15)
+                        ).append("...\n");
+                        displayText.append("----------------------------------------\n");
+                        count++;
+                    }
+
+                    // Create and configure JTextArea
+                    JTextArea textArea = new JTextArea(displayText.toString());
+                    textArea.setEditable(false);
+                    textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+                    textArea.setMargin(new Insets(10, 10, 10, 10));
+
+                    // Add scrolling capability
+                    JScrollPane scrollPane = new JScrollPane(textArea);
+                    scrollPane.setPreferredSize(new Dimension(500, 400));
+
+                    // Show in dialog
+                    JOptionPane.showMessageDialog(null, scrollPane,
+                            "Active Transactions", JOptionPane.INFORMATION_MESSAGE);
+
+                } catch (Exception ex) {
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                    JOptionPane.showMessageDialog(null,
+                            "Failed to fetch transactions", "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
     }//GEN-LAST:event_btnActiveTransActionPerformed
 
     /**
