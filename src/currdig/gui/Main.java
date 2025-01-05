@@ -230,6 +230,7 @@ public class Main extends javax.swing.JFrame {
         btnBC = new javax.swing.JButton();
         btnActiveTrans = new javax.swing.JButton();
         btnAddTrans = new javax.swing.JButton();
+        btnLogout = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jTextFieldNomePesquisar = new javax.swing.JTextField();
@@ -326,6 +327,13 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
+        btnLogout.setText("Logout");
+        btnLogout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLogoutActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -339,7 +347,10 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(jScrollPane6)
                     .addComponent(btnActiveTrans, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnAddTrans, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnRefreshUserList, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnRefreshUserList, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnLogout)))
                 .addContainerGap())
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
@@ -356,7 +367,9 @@ public class Main extends javax.swing.JFrame {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 129, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnLogout)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 100, Short.MAX_VALUE)
                 .addComponent(btnAddTrans)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnActiveTrans)
@@ -1110,7 +1123,30 @@ public class Main extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, message);
     }//GEN-LAST:event_btnVerifyProofActionPerformed
 
-    /*private void btnCreateBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCreateBlockActionPerformed
+    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
+        // Show a confirmation dialog
+        int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to logout?", "Confirm Logout", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+        // Check the user's response
+        if (response == JOptionPane.YES_OPTION) {
+            // Dispose the current frame
+            this.dispose();
+
+            // Open the Landing GUI
+            java.awt.EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    try {
+                        new Landing().setVisible(true);
+                    } catch (NotBoundException | MalformedURLException ex) {
+                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            });
+        }
+        // If NO_OPTION or closed dialog, do nothing
+    }//GEN-LAST:event_btnLogoutActionPerformed
+
+    /*private void btnCreateBlockActionPerformed(java.awt.event.ActionEvent evt) {                                               
         // Disable the button to prevent multiple clicks during mining
         btnCreateBlock.setEnabled(false);
         isMining = true; // Mark mining as in progress
@@ -1261,45 +1297,47 @@ public class Main extends javax.swing.JFrame {
     private void performSearch() {
         try {
             // Get the search term from the text field
-            String nome = jTextFieldNomePesquisar.getText();
+            String name = jTextFieldNomePesquisar.getText().trim();
 
-            // Check if the search term is not empty
-            if (!nome.isEmpty()) {
-                // Load the list of users from the data source
-                listUsers();
+            // Create a new DefaultListModel to hold the user names
+            DefaultListModel<String> model = new DefaultListModel<>();
 
-                // Create a new DefaultListModel to hold the filtered user names
-                DefaultListModel<String> filteredModel = new DefaultListModel<>();
-
-                // Iterate through the users and add those that match the search term
+            // Check if the search term is empty
+            if (name.isEmpty()) {
+                // Load all users if the search term is empty
+                for (User user : users) {
+                    // Exclude the current user from the list
+                    if (!this.username.equals(user.getName())) {
+                        model.addElement(user.getName());
+                    }
+                }
+            } else {
+                // Filter users based on the search term
                 for (User user : users) {
                     // Check if the user's name contains the search term (case insensitive)
-                    if (user.getName().toLowerCase().contains(nome.toLowerCase())) {
+                    if (user.getName().toLowerCase().contains(name.toLowerCase())) {
                         // Exclude the current user from the search results
                         if (!this.username.equals(user.getName())) {
-                            filteredModel.addElement(user.getName()); // Add matching user to the list
+                            model.addElement(user.getName());
                         }
                     }
                 }
-
-                // Set the filtered list model to the JList
-                listUsers.setModel(filteredModel);
-
-                // Set the selection mode to single selection (only one user can be selected)
-                listUsers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-                // If there are matches, select the first item in the list
-                if (!filteredModel.isEmpty()) {
-                    listUsers.setSelectedIndex(0);
-                } else {
-                    // If no matches are found, show a message
-                    JOptionPane.showMessageDialog(this, "No matching users found.");
-                }
-
-            } else {
-                // If the search term is empty, load the full list of users
-                listUsers();
             }
+
+            // Set the filtered or full list model to the JList
+            listUsers.setModel(model);
+
+            // Set the selection mode to single selection (only one user can be selected)
+            listUsers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+            // If there are matches, select the first item in the list
+            if (!model.isEmpty()) {
+                listUsers.setSelectedIndex(0);
+            } else if (!name.isEmpty()) {
+                // Show a message only if the search term was not empty and no matches found
+                JOptionPane.showMessageDialog(this, "No matching users found.");
+            }
+
         } catch (HeadlessException ex) {
             // Handle any errors that may occur during the search or UI update
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
@@ -1345,6 +1383,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton btnActiveTrans;
     private javax.swing.JButton btnAddTrans;
     private javax.swing.JButton btnBC;
+    private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnRefreshUserList;
     private javax.swing.JButton btnSearchUser;
     private javax.swing.JButton btnVerifyProof;

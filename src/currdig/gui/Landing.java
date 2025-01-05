@@ -7,7 +7,6 @@ import java.awt.HeadlessException;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -100,6 +99,11 @@ public class Landing extends javax.swing.JFrame {
         jPanel4.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         txtLoginUsername.setBorder(javax.swing.BorderFactory.createTitledBorder("Username"));
+        txtLoginUsername.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtLoginUsernameKeyPressed(evt);
+            }
+        });
 
         btnLogin.setText("Login");
         btnLogin.addActionListener(new java.awt.event.ActionListener() {
@@ -109,6 +113,11 @@ public class Landing extends javax.swing.JFrame {
         });
 
         txtLoginPassword.setBorder(javax.swing.BorderFactory.createTitledBorder("Password"));
+        txtLoginPassword.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtLoginPasswordKeyPressed(evt);
+            }
+        });
 
         jLabel2.setFont(new java.awt.Font("OCR A Extended", 1, 24)); // NOI18N
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -157,6 +166,11 @@ public class Landing extends javax.swing.JFrame {
         jPanel5.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         txtRegisterUsername.setBorder(javax.swing.BorderFactory.createTitledBorder("Username"));
+        txtRegisterUsername.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtRegisterUsernameKeyPressed(evt);
+            }
+        });
 
         btnRegister.setText("Register");
         btnRegister.addActionListener(new java.awt.event.ActionListener() {
@@ -171,6 +185,11 @@ public class Landing extends javax.swing.JFrame {
         lblLogo.setPreferredSize(new java.awt.Dimension(100, 100));
 
         txtRegisterPassword.setBorder(javax.swing.BorderFactory.createTitledBorder("Password"));
+        txtRegisterPassword.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtRegisterPasswordKeyPressed(evt);
+            }
+        });
 
         jLabel1.setFont(new java.awt.Font("OCR A Extended", 1, 24)); // NOI18N
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -375,6 +394,34 @@ public class Landing extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, ex.getMessage());
         }
     }//GEN-LAST:event_btnRegisterActionPerformed
+
+    private void txtLoginUsernameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtLoginUsernameKeyPressed
+        // Check if the key pressed is the Enter key
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            btnLogin.doClick();
+        }
+    }//GEN-LAST:event_txtLoginUsernameKeyPressed
+
+    private void txtLoginPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtLoginPasswordKeyPressed
+        // Check if the key pressed is the Enter key
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            btnLogin.doClick();
+        }
+    }//GEN-LAST:event_txtLoginPasswordKeyPressed
+
+    private void txtRegisterUsernameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtRegisterUsernameKeyPressed
+        // Check if the key pressed is the Enter key
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            btnRegister.doClick();
+        }
+    }//GEN-LAST:event_txtRegisterUsernameKeyPressed
+
+    private void txtRegisterPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtRegisterPasswordKeyPressed
+        // Check if the key pressed is the Enter key
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            btnRegister.doClick();
+        }
+    }//GEN-LAST:event_txtRegisterPasswordKeyPressed
 
     /**
      * @param args the command line arguments

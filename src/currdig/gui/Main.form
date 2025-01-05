@@ -95,6 +95,10 @@
                               <Component id="btnActiveTrans" alignment="0" max="32767" attributes="0"/>
                               <Component id="btnAddTrans" alignment="0" max="32767" attributes="0"/>
                               <Component id="btnRefreshUserList" alignment="0" max="32767" attributes="0"/>
+                              <Group type="102" alignment="1" attributes="0">
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  <Component id="btnLogout" min="-2" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -116,7 +120,9 @@
                           <Component id="jScrollPane2" min="-2" pref="155" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jScrollPane3" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="129" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="btnLogout" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="100" max="32767" attributes="0"/>
                           <Component id="btnAddTrans" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="btnActiveTrans" min="-2" max="-2" attributes="0"/>
@@ -245,6 +251,14 @@
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnAddTransActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="btnLogout">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Logout"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnLogoutActionPerformed"/>
                   </Events>
                 </Component>
               </SubComponents>

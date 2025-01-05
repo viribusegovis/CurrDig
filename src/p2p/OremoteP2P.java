@@ -1046,6 +1046,12 @@ public class OremoteP2P extends UnicastRemoteObject implements IremoteP2P {
                 if (remote.isValid()) {
                     // Update the local blockchain with the peer's blockchain
                     myBlockchain = remote;
+                    
+                    try {
+                        myBlockchain.save(BLOCHAIN_FILENAME);
+                    } catch (Exception ex) {
+                        Logger.getLogger(OremoteP2P.class.getName()).log(Level.SEVERE, null, ex);
+                    }
 
                     // The blockchain should be updated with only the missing blocks
                     listener.onBlockchainUpdate(myBlockchain);

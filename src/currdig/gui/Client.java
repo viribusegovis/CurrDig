@@ -8,7 +8,6 @@ import java.awt.HeadlessException;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -132,9 +131,21 @@ public class Client extends javax.swing.JFrame {
             }
         });
 
+        txtUsername.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtUsernameKeyPressed(evt);
+            }
+        });
+
         jLabel1.setText("Username");
 
         jLabel2.setText("Password");
+
+        txtPassword.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtPasswordKeyPressed(evt);
+            }
+        });
 
         jLabel3.setText("Digital Curriculum - Student Viewer");
 
@@ -256,6 +267,20 @@ public class Client extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Failed to load blockchain", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnLoginActionPerformed
+
+    private void txtUsernameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtUsernameKeyPressed
+        // Check if the key pressed is the Enter key
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            btnLogin.doClick();
+        }
+    }//GEN-LAST:event_txtUsernameKeyPressed
+
+    private void txtPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPasswordKeyPressed
+        // Check if the key pressed is the Enter key
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            btnLogin.doClick();
+        }
+    }//GEN-LAST:event_txtPasswordKeyPressed
 
     /**
      * @param args the command line arguments
